@@ -1294,3 +1294,97 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 10. FULLSCREEN ZOOM & PAN LIGHTBOX FOR FRITZING SCHEMATIC
+// ─────────────────────────────────────────────────────────────────────────────
+
+(() => {
+  const lb = document.getElementById('schematic-lightbox');
+  const stage = document.getElementById('lb-stage');
+  const img = document.getElementById('lb-img');
+  const zoomVal = document.getElementById('lb-zoom-val');
+  const btnOpen = document.getElementById('btn-open-schematic');
+  const preview = document.getElementById('schematic-preview');
+  const btnClose = document.getElementById('lb-close');
+  const btnIn = document.getElementById('lb-zoom-in');
+  const btnOut = document.getElementById('lb-zoom-out');
+  const btnReset = document.getElementById('lb-zoom-reset');
+  if (!lb || !stage || !img) return;
+
+  let scale = 1.0;
+  let tx = 0;
+  let ty = 0;
+  let dragging = false;
+  let sx = 0;
+  let sy = 0;
+
+  function renderTransform() {
+    if (scale <= 1.01) { tx = 0; ty = 0; }
+    img.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
+    zoomVal.textContent = `${Math.round(scale * 100)}%`;
+  }
+
+  function setScale(next) {
+    scale = Math.min(4.0, Math.max(1.0, next));
+    renderTransform();
+  }
+
+  function openLightbox() {
+    scale = 1.0; tx = 0; ty = 0;
+    renderTransform();
+    lb.classList.add('open');
+    lb.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lb.classList.remove('open');
+    lb.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  btnOpen?.addEventListener('click', openLightbox);
+  preview?.addEventListener('click', openLightbox);
+  preview?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(); }
+  });
+  btnClose?.addEventListener('click', closeLightbox);
+  btnIn?.addEventListener('click', () => setScale(scale + 0.45));
+  btnOut?.addEventListener('click', () => setScale(scale - 0.45));
+  btnReset?.addEventListener('click', () => { scale = 1.0; tx = 0; ty = 0; renderTransform(); });
+
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    setScale(scale + (e.deltaY < 0 ? 0.28 : -0.28));
+  }, { passive: false });
+
+  stage.addEventListener('dblclick', () => {
+    if (scale > 1.2) { scale = 1.0; tx = 0; ty = 0; renderTransform(); }
+    else setScale(2.2);
+  });
+
+  stage.addEventListener('pointerdown', (e) => {
+    if (scale <= 1.01) return;
+    dragging = true;
+    sx = e.clientX - tx;
+    sy = e.clientY - ty;
+    stage.classList.add('dragging');
+    stage.setPointerCapture(e.pointerId);
+  });
+
+  stage.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    tx = e.clientX - sx;
+    ty = e.clientY - sy;
+    renderTransform();
+  });
+
+  const endDrag = () => { dragging = false; stage.classList.remove('dragging'); };
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lb.classList.contains('open')) closeLightbox();
+  });
+})();

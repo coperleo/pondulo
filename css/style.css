@@ -1038,6 +1038,190 @@ code {
 .link-label span { color: var(--text-muted); font-size: 0.64rem; }
 .link-arrow { font-size: 1.2rem; color: var(--text-muted); }
 
+/* Fritzing Schematic Card & Fullscreen Zoom Lightbox */
+.schematic-card {
+  margin-bottom: 2.2rem;
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+.schematic-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 1.2rem;
+  background: rgba(10, 13, 20, 0.9);
+  border-bottom: 1px solid var(--border);
+}
+.schematic-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  color: #cbd5e1;
+}
+.schematic-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+}
+.schematic-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.schematic-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.schematic-btn:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: var(--cyan);
+  color: #ffffff;
+}
+.schematic-btn-dl {
+  background: rgba(239, 59, 45, 0.16);
+  border-color: rgba(239, 59, 45, 0.55);
+  color: #fee2e2;
+}
+.schematic-btn-dl:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: #ffffff;
+}
+.schematic-preview {
+  position: relative;
+  cursor: zoom-in;
+  background: #f4f6fa;
+  overflow: hidden;
+}
+.schematic-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: transform 0.35s ease;
+}
+.schematic-preview:hover img {
+  transform: scale(1.012);
+}
+.schematic-zoom-hint {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 99px;
+  background: rgba(10, 12, 18, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #f8fafc;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Lightbox Modal */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(6, 8, 12, 0.94);
+  backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.lightbox.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.lightbox-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.4rem;
+  background: rgba(12, 15, 22, 0.96);
+  border-bottom: 1px solid var(--border-strong);
+  z-index: 5;
+}
+.lightbox-title {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  color: #e2e8f0;
+}
+.lightbox-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.lb-zoom-val {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  min-width: 48px;
+  text-align: center;
+  color: var(--cyan);
+}
+.lb-close {
+  font-size: 1.15rem;
+  padding: 0.25rem 0.72rem;
+}
+.lightbox-stage {
+  flex: 1;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.lightbox-stage.dragging { cursor: grabbing; }
+.lightbox-stage img {
+  max-width: 92vw;
+  max-height: calc(100vh - 125px);
+  border-radius: 10px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
+  transform-origin: center center;
+  transition: transform 0.08s ease-out;
+  will-change: transform;
+}
+.lightbox-hint {
+  text-align: center;
+  padding: 0.55rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: rgba(12, 15, 22, 0.92);
+  border-top: 1px solid var(--border);
+}
+
 /* Decisions Grid */
 .decisions-grid {
   display: grid;

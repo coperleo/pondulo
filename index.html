@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -497,6 +497,30 @@
           </div>
         </div>
 
+        <!-- Interactive Zoomable Fritzing Wiring Diagram -->
+        <div class="schematic-card">
+          <div class="schematic-bar">
+            <div class="schematic-title">
+              <span class="schematic-dot"></span>
+              <span>SCHEMA CABLAGGI COMPLETI · STILE FRITZING (2640×1780 HD)</span>
+            </div>
+            <div class="schematic-actions">
+              <button type="button" class="schematic-btn" id="btn-open-schematic" aria-label="Ingrandisci schema cablaggi">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+                Ingrandisci
+              </button>
+              <a href="assets/media/pondulo_schema_fritzing.png" download="PONDULO_Schema_Collegamenti_Fritzing.png" class="schematic-btn schematic-btn-dl" aria-label="Scarica schema PNG HD">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Scarica PNG
+              </a>
+            </div>
+          </div>
+          <div class="schematic-preview" id="schematic-preview" role="button" tabindex="0" aria-label="Apri schema collegamenti a schermo intero">
+            <img src="assets/media/pondulo_schema_fritzing.png" alt="Schema elettrico stile Fritzing di tutti i collegamenti di PONDULO: 3x STM32 NUCLEO-G474RE, VL53L7CX, ILI9341, YX5300 con cavo AUX, amplificatore audio, altoparlante, HX711, cella di carico, ESP8266 e LM2596" loading="lazy" />
+            <span class="schematic-zoom-hint">Clicca sullo schema per ingrandire e fare zoom 🔍</span>
+          </div>
+        </div>
+
         <div class="decisions-grid">
           <div class="decision-card">
             <span class="dec-icon">⚡</span>
@@ -826,9 +850,31 @@
     </div>
   </footer>
 
+  <!-- Fullscreen Zoom Lightbox for Fritzing Schematic -->
+  <div class="lightbox" id="schematic-lightbox" aria-hidden="true" role="dialog" aria-label="Visualizzatore ingrandito schema cablaggi PONDULO">
+    <div class="lightbox-toolbar">
+      <span class="lightbox-title">SCHEMA CABLAGGI PONDULO · FRITZING HD</span>
+      <div class="lightbox-controls">
+        <button type="button" class="schematic-btn" id="lb-zoom-out" aria-label="Riduci zoom">−</button>
+        <span class="lb-zoom-val" id="lb-zoom-val">100%</span>
+        <button type="button" class="schematic-btn" id="lb-zoom-in" aria-label="Aumenta zoom">+</button>
+        <button type="button" class="schematic-btn" id="lb-zoom-reset">Reset</button>
+        <a href="assets/media/pondulo_schema_fritzing.png" download="PONDULO_Schema_Collegamenti_Fritzing.png" class="schematic-btn schematic-btn-dl">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Scarica PNG
+        </a>
+        <button type="button" class="schematic-btn lb-close" id="lb-close" aria-label="Chiudi">&times;</button>
+      </div>
+    </div>
+    <div class="lightbox-stage" id="lb-stage">
+      <img src="assets/media/pondulo_schema_fritzing.png" alt="Schema cablaggi PONDULO HD" id="lb-img" draggable="false" />
+    </div>
+    <div class="lightbox-hint">Rotellina del mouse o pulsanti +/− per fare zoom · Trascina per spostarti · ESC per chiudere</div>
+  </div>
+
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=4"></script>
 </body>
 </html>

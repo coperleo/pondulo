@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PONDULO — Bilancia Touchless 3D | NISC 2026 · STMicroelectronics</title>
+  <meta name="description" content="PONDULO è una bilancia intelligente touchless controllata tramite gesti spaziali ToF 8x8 VL53L7CX su architettura distribuita tri-Nucleo STM32G474RE. Sviluppata al NISC 2026 in collaborazione con STMicroelectronics." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Import Map for Three.js ES Modules -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- Top Minimal Navigation -->
+  <header class="topbar" id="topbar">
+    <div class="topbar-inner">
+      <a href="#top" class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-name">PONDULO</span>
+        <span class="brand-tag">NISC 2026</span>
+      </a>
+      <nav class="nav-links" aria-label="Sezioni">
+        <a href="#chapter-xray">Raggi X</a>
+        <a href="#chapter-scheda-a">Componenti 3D</a>
+        <a href="#chapter-full-explode">Esploso Totale</a>
+        <a href="#inspector-anchor">Inspector</a>
+        <a href="#demo-live">Demo</a>
+        <a href="#architettura">Architettura</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#team">Team 6</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       STICKY 3D SCROLLYTELLING CAROUSEL (12 CHAPTERS)
+       ═══════════════════════════════════════════════════════════════ -->
+  <section id="top" class="scrolly-stage">
+
+    <!-- Sticky WebGL Canvas + SVG Leader Lines + 3D Callout Overlay -->
+    <div class="viewport-sticky" id="viewport-sticky">
+      <canvas id="pondulo-canvas"></canvas>
+
+      <!-- Loading Overlay -->
+      <div class="loader-overlay" id="loader-overlay">
+        <div class="loader-ring"></div>
+        <p class="loader-text">CARICAMENTO MODELLO 3D CAD · 2.1 MB</p>
+      </div>
+
+      <!-- Subtle Telemetry Corner HUD -->
+      <div class="stage-hud-top">
+        <div class="hud-pill" id="hud-chapter">01 / 12 · PANORAMICA</div>
+        <div class="hud-pill hud-mono" id="hud-telemetry">TILT 0° · X-RAY 0% · EXPLODE 0%</div>
+      </div>
+
+      <!-- SVG Leader Lines connecting exact 3D anchor dots to de-overlapped badges -->
+      <svg class="leaders-svg" id="leaders-svg" aria-hidden="true"></svg>
+
+      <!-- Projected 3D Hotspot Pins Container -->
+      <div class="hotspots-layer" id="hotspots-layer" aria-live="polite"></div>
+
+      <!-- Floating Component Detail Drawer (also clickable in Inspector / Full Explode) -->
+      <aside class="component-drawer" id="component-drawer" aria-hidden="true">
+        <button class="drawer-close" id="drawer-close" aria-label="Chiudi scheda">&times;</button>
+        <div class="drawer-badge" id="drawer-badge">SCHEDA A · SENSING</div>
+        <h3 class="drawer-title" id="drawer-title">VL53L7CX ToF 8×8</h3>
+        <p class="drawer-subtitle" id="drawer-subtitle">X-NUCLEO-53L7A1 · 940 nm VCSEL</p>
+        <p class="drawer-desc" id="drawer-desc"></p>
+        <div class="drawer-specs" id="drawer-specs"></div>
+      </aside>
+
+      <!-- Interactive Inspector Dock (visible in Chapter 12) -->
+      <div class="inspector-dock" id="inspector-dock">
+        <div class="dock-group">
+          <label for="ctrl-explode">
+            <span>Esploso</span>
+            <strong id="val-explode">0%</strong>
+          </label>
+          <input type="range" id="ctrl-explode" min="0" max="100" value="0" />
+        </div>
+        <div class="dock-group">
+          <label for="ctrl-tilt">
+            <span>Testa</span>
+            <strong id="val-tilt">0°</strong>
+          </label>
+          <input type="range" id="ctrl-tilt" min="-24" max="24" value="0" />
+        </div>
+        <div class="dock-actions">
+          <button class="dock-btn" id="btn-xray" type="button">Raggi X</button>
+          <button class="dock-btn" id="btn-beam" type="button">Fascio ToF</button>
+          <button class="dock-btn active" id="btn-pins" type="button">Etichette</button>
+          <button class="dock-btn dock-btn-primary" id="btn-orbit" type="button">Ruota 360°</button>
+        </div>
+      </div>
+
+      <!-- Scroll Progress Bar -->
+      <div class="scroll-progress-track">
+        <div class="scroll-progress-bar" id="scroll-progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- Extended 12-Chapter Scroll Narrative Carousel -->
+    <div class="chapters-container">
+
+      <!-- 01 · HERO -->
+      <article class="chapter chapter-hero" id="chapter-hero" data-chapter="0">
+        <div class="chapter-card hero-card">
+          <div class="eyebrow">
+            <span class="eyebrow-dot"></span>
+            NeaPolis Innovation Summer Campus 2026 · STMicroelectronics
+          </div>
+          <h1>PONDULO</h1>
+          <p class="hero-lead">
+            La bilancia intelligente <strong>100% touchless</strong> per ambienti sterili e alimentari.
+            Nessun tasto fisico, zero contaminazione crociata: tutto si controlla nell'aria con un sensore laser <strong>ToF 8×8</strong> e tre microcontrollori <strong>STM32G474RE</strong>.
+          </p>
+          <div class="hero-metrics">
+            <div class="metric">
+              <span class="metric-val">64</span>
+              <span class="metric-lbl">Zone dToF 8×8</span>
+            </div>
+            <div class="metric">
+              <span class="metric-val">3×</span>
+              <span class="metric-lbl">STM32G474RE 170 MHz</span>
+            </div>
+            <div class="metric">
+              <span class="metric-val">24-bit</span>
+              <span class="metric-lbl">ADC HX711 Metrologia</span>
+            </div>
+            <div class="metric">
+              <span class="metric-val">0</span>
+              <span class="metric-lbl">Contatti Fisici</span>
+            </div>
+          </div>
+          <div class="scroll-hint">
+            <span class="scroll-mouse"></span>
+            Scorri il carosello 3D: PONDULO ruota, passa ai raggi X e ti presenta ogni singolo componente
+          </div>
+        </div>
+      </article>
+
+      <!-- 02 · DESIGN & TILTING HEAD -->
+      <article class="chapter chapter-right" id="chapter-tilt" data-chapter="1">
+        <div class="chapter-card">
+          <span class="step-num">02 / 12 · ERGONOMIA & VINCOLO ROTATIVO</span>
+          <h2>Testa basculante per ogni postazione.</h2>
+          <p>
+            La scocca in PLA rosso vermiglio stampata in 3D integra una <strong>colonna centrale cava</strong>
+            che nasconde interamente i cablaggi tra base e testa, lasciando l'esterno liscio e igienizzabile.
+          </p>
+          <p>
+            La doppia cerniera interna attorno all'asse orizzontale permette di <strong>inclinare fluidamente la testa</strong>
+            (±24°), orientando display e sensore ToF verso operatori in piedi al banco o seduti in ambulatorio.
+          </p>
+          <div class="spec-chips">
+            <span>Altezza 330 mm</span>
+            <span>Piatto 134 × 134 mm</span>
+            <span>Tilt ±24° continuo</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 03 · TOF 8x8 LASER CONE -->
+      <article class="chapter chapter-left" id="chapter-tof" data-chapter="2">
+        <div class="chapter-card">
+          <span class="step-num">03 / 12 · INTERAZIONE SPAZIALE LASER</span>
+          <h2>64 fasci infrarossi. Zero tocco.</h2>
+          <p>
+            Il sensore <strong>VL53L7CX</strong> emette impulsi laser infrarossi (VCSEL 940 nm) su una griglia
+            <strong>8×8</strong> con campo visivo di ~60°. Misurando il tempo di volo reale della luce, riconosce la mano
+            anche con guanti chirurgici o in nitrile di qualsiasi colore.
+          </p>
+          <ul class="feature-list">
+            <li><strong>Air-Cursor fluido:</strong> baricentro spaziale Q16 con glide EMA a 100 Hz.</li>
+            <li><strong>Dwell Select (1,5 s):</strong> sostare su un tasto lo conferma senza toccare lo schermo.</li>
+            <li><strong>Air-Swipe & Depth:</strong> gesti in 4 direzioni + soglie <code>&lt;90 mm</code> / <code>&gt;190 mm</code>.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 04 · AUTOMATIC X-RAY ORBIT -->
+      <article class="chapter chapter-right" id="chapter-xray" data-chapter="3">
+        <div class="chapter-card">
+          <span class="step-num">04 / 12 · VISIONE RAGGI X AUTOMATICA</span>
+          <h2>Sotto la scocca: ingegneria ad alta densità.</h2>
+          <p>
+            Mentre PONDULO ruota, la scocca diventa trasparente in modalità <strong>Raggi X</strong> svelando
+            come l'intera architettura embedded si incastri al millimetro dentro i 200 × 130 mm della testa
+            e nel telaio strutturale a X della base.
+          </p>
+          <p>
+            Continuando a scorrere, ogni sottosistema uscirà uno alla volta nella propria vista dedicata — senza
+            intersezioni — per essere spiegato nel dettaglio.
+          </p>
+          <div class="spec-chips">
+            <span>3× NUCLEO-G474RE</span>
+            <span>ChibiOS/RT</span>
+            <span>Bus separati</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 05 · SPOTLIGHT SCHEDA A: ToF VL53L7CX + NUCLEO #1 -->
+      <article class="chapter chapter-left" id="chapter-scheda-a" data-chapter="4">
+        <div class="chapter-card">
+          <span class="step-num">05 / 12 · SCHEDA A · SENSING OTTICO</span>
+          <h2>VL53L7CX + STM32 Nucleo #1</h2>
+          <p>
+            Lo shield <strong>X-NUCLEO-53L7A1</strong> e la prima <strong>NUCLEO-G474RE</strong> formano un nodo
+            dedicato esclusivamente alla visione spaziale (<code>cursorSensor</code>), collegato al sensore su
+            <strong>I²C1 Fast Mode+ a 1 MHz</strong> con interrupt hardware su <code>PA4</code>.
+          </p>
+          <p>
+            Calcola il baricentro della mano in aritmetica intera Q16, filtra la traiettoria e trasmette
+            coordinate <code>$XY</code> e gesti <code>$GS</code> verso Scheda B via <strong>USART3 a 921.600 baud</strong>.
+          </p>
+          <div class="spec-chips">
+            <span>8×8 @ 15 Hz / 4×4 @ 60 Hz</span>
+            <span>USART3 921.6 kbaud</span>
+            <span>Zero float</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 06 · SPOTLIGHT SCHEDA B: DISPLAY ILI9341 + NUCLEO #2 -->
+      <article class="chapter chapter-right" id="chapter-scheda-b" data-chapter="5">
+        <div class="chapter-card">
+          <span class="step-num">06 / 12 · SCHEDA B · HUB HMI & AUDIO</span>
+          <h2>Display TFT 2.2" + STM32 Nucleo #2</h2>
+          <p>
+            È il cervello dell'interfaccia (<code>DEMO7</code>): lo shield <strong>X-NUCLEO-GFX01M2</strong> con display
+            QVGA <strong>ILI9341 (320×240)</strong> disegna il cursore touchless, le barre di Dwell e i menu
+            <strong>Macelleria</strong> e <strong>Clinico</strong> tramite libreria <strong>uGFX</strong> a 50 Hz protetta da mutex SPI.
+          </p>
+          <p>
+            Riceve i gesti da Scheda A, il peso analogico da Scheda C (<code>ADC2 PA4</code>), i prezzi da ESP8266 (<code>UART1</code>)
+            e comanda i feedback acustici sul lettore MP3 (<code>UART5</code>).
+          </p>
+          <div class="spec-chips">
+            <span>ILI9341 SPI · uGFX</span>
+            <span>Mutex gdisp</span>
+            <span>Dual UI Clinico/Food</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 07 · SPOTLIGHT SCHEDA C: NUCLEO #3 + 7-SEGMENT DISPLAY -->
+      <article class="chapter chapter-left" id="chapter-scheda-c" data-chapter="6">
+        <div class="chapter-card">
+          <span class="step-num">07 / 12 · SCHEDA C · METROLOGIA & LED</span>
+          <h2>STM32 Nucleo #3 + Display 7-Segmenti</h2>
+          <p>
+            Montata lungo la parete superiore della testa, la terza <strong>NUCLEO-G474RE</strong> (<code>bilanciaFinale</code>)
+            elabora i campioni a 24 bit dell'HX711 con media mobile a 16 campioni, ciclo Live/Hold, auto-taratura al boot
+            (con animazione <em>Knight Rider</em>) e <em>auto-zero tracking</em> sotto ±1 g.
+          </p>
+          <p>
+            Pilota il display a 8 cifre <strong>2× CL3641BH / 74HC595</strong> via SPI1 e invia il peso a Scheda B con un
+            <strong>ponte analogico puro DAC → ADC (PA4 → PA4, 0–3,3 V = 0–1000 g)</strong> a latenza e jitter zero.
+          </p>
+          <div class="spec-chips">
+            <span>DAC1_OUT1 → ADC2_IN17</span>
+            <span>2× 74HC595 SPI1</span>
+            <span>Auto-Zero ±1 g</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 08 · SPOTLIGHT REAR LEFT: MP3 YX5300 + ESP8266 Wi-Fi -->
+      <article class="chapter chapter-right" id="chapter-audio-iot" data-chapter="7">
+        <div class="chapter-card">
+          <span class="step-num">08 / 12 · RETRO SINISTRO · AUDIO & IoT</span>
+          <h2>Serial MP3 YX5300 & Wi-Fi ESP8266</h2>
+          <p>
+            Ruotando sul lato posteriore emergono due moduli chiave. Il <strong>Serial MP3 Player v1.2 (YX5300)</strong>
+            con microSD riceve frame a 8 byte su <strong>UART5 (9600 baud)</strong> da Scheda B per riprodurre conferme sonore
+            di benvenuto, selezione tasti e scontrino senza gravare sulla CPU.
+          </p>
+          <p>
+            Subito sotto, il modulo <strong>ESP8266 Wi-Fi</strong> ospita una Web App locale con salvataggio atomico in flash
+            <code>LittleFS</code> (<code>.tmp</code> → rename) per aggiornare i listini €/kg da smartphone via <strong>UART1 (38.400 baud)</strong>.
+          </p>
+          <div class="spec-chips">
+            <span>YX5300 · UART5 9600</span>
+            <span>ESP8266 HTTP + LittleFS</span>
+            <span>UART1 38400 baud</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 09 · SPOTLIGHT REAR RIGHT: LM2596 BUCK CONVERTER -->
+      <article class="chapter chapter-left" id="chapter-power" data-chapter="8">
+        <div class="chapter-card">
+          <span class="step-num">09 / 12 · RETRO DESTRO · ALIMENTAZIONE</span>
+          <h2>Convertitore Buck DC-DC LM2596</h2>
+          <p>
+            Sul lato destro della camera posteriore, il modulo step-down <strong>LM2596</strong> con trimmer di precisione
+            e doppio condensatore elettrolitico converte l'alimentazione esterna a <strong>12 V DC</strong> in un rail
+            stabile a <strong>5 V</strong>.
+          </p>
+          <p>
+            Distribuisce energia pulita e massa comune (<code>GND</code> condiviso, essenziale per il riferimento analogico DAC→ADC)
+            alle tre schede Nucleo, ai display, al lettore MP3 e all'ESP8266.
+          </p>
+          <div class="spec-chips">
+            <span>Input 12 V DC</span>
+            <span>Output 5,0 V regolato</span>
+            <span>GND stella comune</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 10 · SPOTLIGHT BASE: WEIGHING PLATE, LOAD CELL, HX711, AUDIO AMP & SPEAKER -->
+      <article class="chapter chapter-right" id="chapter-explode-base" data-chapter="9">
+        <div class="chapter-card">
+          <span class="step-num">10 / 12 · ESPLOSO BASE · METROLOGIA & ACUSTICA</span>
+          <h2>Cella di carico, HX711, Amp e Speaker.</h2>
+          <p>
+            Scendendo alla base: il <strong>piatto bianco</strong> si solleva scoprendo la <strong>cella di carico estensimetrica in alluminio</strong>
+            ancorata al telaio a X. Subito dietro, nel piantone cavo, l'<strong>ADC HX711 a 24 bit</strong> amplifica i microvolt vicino al sensore riducendo i disturbi.
+          </p>
+          <p>
+            Ai lati opposti del vano inferiore emergono l'<strong>amplificatore audio</strong> (con condensatore 1000 µF 35 V e potenziometro volume)
+            e l'<strong>altoparlante circolare da 45 mm</strong> che diffonde i cue acustici al banco.
+          </p>
+          <div class="spec-chips">
+            <span>HX711 24-bit PGA</span>
+            <span>Amp 1000 µF + Vol</span>
+            <span>Speaker 45 mm</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 11 · GRAND FULL EXPLODED VIEW 360° -->
+      <article class="chapter chapter-top" id="chapter-full-explode" data-chapter="10">
+        <div class="chapter-card compact-card">
+          <span class="step-num">11 / 12 · ESPLOSO COMPLETO 360°</span>
+          <h2>Tutti i 12 sottosistemi in armonia spaziale.</h2>
+          <p>
+            Ogni scocca, scheda e sensore si apre lungo il proprio asse di montaggio senza alcuna compenetrazione.
+            Clicca su qualsiasi etichetta per aprire la sua scheda pinout completa.
+          </p>
+        </div>
+      </article>
+
+      <!-- 12 · FREE 360° INTERACTIVE INSPECTOR -->
+      <article class="chapter chapter-top" id="inspector-anchor" data-chapter="11">
+        <div class="chapter-card compact-card">
+          <span class="step-num">12 / 12 · INSPECTOR LIBERO</span>
+          <h2>Esplora PONDULO a mano libera.</h2>
+          <p>
+            Attiva <strong>Ruota 360°</strong> nella barra in basso, regola gli slider di <strong>Esploso</strong> e <strong>Inclinazione Testa</strong>,
+            attiva <strong>Raggi X</strong> o il <strong>Fascio ToF 8×8</strong> e clicca qualsiasi componente.
+          </p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       EDITORIAL & TECHNICAL DEEP DIVE SECTIONS
+       ═══════════════════════════════════════════════════════════════ -->
+  <main class="editorial">
+
+    <!-- SECTION: LIVE DEMO & GALLERY -->
+    <section id="demo-live" class="section">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-kicker">PROTOTIPO REALE · NISC 2026</span>
+          <h2>Dal CAD al banco di prova, in azione.</h2>
+          <p class="section-intro">
+            Nessun render finto: PONDULO è stato progettato, stampato, cablato e testato dal vivo durante l'HackFest finale presso STMicroelectronics.
+            Nel video si osserva il flusso reale: navigazione dei menu a mano libera, pesatura con lettura istantanea sui due display, tastierino touchless e stampa scontrino.
+          </p>
+        </div>
+
+        <div class="demo-grid">
+          <div class="video-frame">
+            <div class="video-chrome">
+              <span class="rec-dot"></span>
+              <span>LIVE CAPTURE · HACKFEST NISC 2026</span>
+            </div>
+            <video controls playsinline muted loop preload="metadata" poster="assets/media/hero_live.webp">
+              <source src="assets/media/demo_pondulo.mp4" type="video/mp4" />
+              Il tuo browser non supporta il tag video HTML5.
+            </video>
+            <div class="video-caption">
+              Navigazione gestuale reale: Home → Clinico / Macelleria → Selezione taglio → Pesata live → Moltiplicatore → Scontrino con feedback audio.
+            </div>
+          </div>
+
+          <div class="photo-mosaic">
+            <figure class="photo-card span-2">
+              <img src="assets/media/hero_live.webp" alt="PONDULO in dimostrazione live al NISC 2026" loading="lazy" />
+              <figcaption>Presentazione live: interfaccia TFT <code>BILANCIA - Manzo</code> e lettura peso 7-segmenti sincronizzata.</figcaption>
+            </figure>
+            <figure class="photo-card span-2">
+              <img src="assets/media/campus_side.webp" alt="Vista laterale di PONDULO al campus STMicroelectronics" loading="lazy" />
+              <figcaption>Profilo laterale al banco di laboratorio STMicroelectronics (alimentazione 12V regolata a 5V).</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: DISTRIBUTED ARCHITECTURE -->
+    <section id="architettura" class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-kicker">INGEGNERIA EMBEDDED · CHIBIOS/RT</span>
+          <h2>Architettura distribuita a 3 MCU + nodo Wi-Fi.</h2>
+          <p class="section-intro">
+            Per garantire determinismo real-time senza colli di bottiglia tra scansione laser ToF, rendering grafico SPI,
+            multiplexing LED e acquisizione metrologica a 24 bit, il sistema divide il carico su tre <strong>STM32 NUCLEO-G474RE</strong> (Cortex-M4 @ 170 MHz)
+            affiancate da un modulo <strong>ESP8266</strong> per l'aggiornamento remoto del listino prezzi.
+          </p>
+        </div>
+
+        <div class="arch-diagram">
+          <div class="arch-node node-tof">
+            <div class="node-tag">SCHEDA A · cursorSensor</div>
+            <h3>NUCLEO-G474RE + VL53L7CX</h3>
+            <p>Shield <code>X-NUCLEO-53L7A1</code> via <strong>I²C1 1 MHz FM+</strong> (EXTI interrupt su PA4 + semaforo ChibiOS). Calcola baricentro sub-pixel Q16, filtro EMA 100 Hz e FSM gesti.</p>
+            <div class="node-meta">8×8 @ 15 Hz · 4×4 @ 60 Hz</div>
+          </div>
+
+          <div class="arch-link">
+            <span class="link-line"></span>
+            <div class="link-label">
+              <strong>USART3 · 921.600 baud</strong>
+              <span>PC10 → PC11 · ASCII <code>$XY</code> / <code>$GS</code></span>
+            </div>
+            <span class="link-arrow">→</span>
+          </div>
+
+          <div class="arch-node node-hub">
+            <div class="node-tag">SCHEDA B · DEMO7 (HUB HMI & AUDIO)</div>
+            <h3>NUCLEO-G474RE + ILI9341</h3>
+            <p>Shield <code>X-NUCLEO-GFX01M2</code> (2.2" QVGA uGFX, mutex SPI incrementale @ 50 Hz). Gestisce Home, Clinico, Macelleria, Carrello, Scontrino e trigger audio.</p>
+            <div class="node-sub-links">
+              <div><strong>UART5 (9600)</strong> → Serial MP3 <code>YX5300</code> → Amp + Speaker</div>
+              <div><strong>UART1 (38400)</strong> ← <code>ESP8266</code> Web Server (LittleFS)</div>
+            </div>
+          </div>
+
+          <div class="arch-link">
+            <span class="link-arrow">←</span>
+            <div class="link-label link-analog">
+              <strong>DAC → ADC Analogico</strong>
+              <span>PA4 → PA4 · 0–3,3 V = 0–1000 g</span>
+            </div>
+            <span class="link-line"></span>
+          </div>
+
+          <div class="arch-node node-scale">
+            <div class="node-tag">SCHEDA C · bilanciaFinale</div>
+            <h3>NUCLEO-G474RE + HX711</h3>
+            <p>Legge cella di carico 24-bit, applica media mobile 16 campioni, ciclo Live/Hold + Auto-Zero tracking, pilota display 8 cifre <code>2× CL3641BH / 74HC595</code> su SPI1.</p>
+            <div class="node-meta">Auto-tare + Easter egg Knight Rider</div>
+          </div>
+        </div>
+
+        <div class="decisions-grid">
+          <div class="decision-card">
+            <span class="dec-icon">⚡</span>
+            <h4>Perché un ponte analogico DAC → ADC?</h4>
+            <p>
+              Dopo aver testato sia un link seriale UART (affetto da errori di framing per contesa su USART3) sia un link PWM (soggetto a jitter di ±2–3 g che forzava ridisegni continui del display),
+              il team ha optato per una <strong>tensione DC pura</strong> generata dal DAC hardware su <code>PA4</code> e campionata dall'ADC2 della Scheda B: latenza zero, nessun pacchetto da decodificare, lettura granitica.
+            </p>
+          </div>
+          <div class="decision-card">
+            <span class="dec-icon">📐</span>
+            <h4>Zero Floating-Point sul tracking della mano</h4>
+            <p>
+              Il calcolo del baricentro ponderato su 5 zone (<code>w = 65536 / dist</code>) e il filtro di smoothing EMA (<code>α = 0.35</code> a 100 Hz con correzione anti-stallo)
+              girano interamente in <strong>aritmetica intera Q16/Q8</strong>, riducendo al minimo il carico CPU e garantendo un cursore fluido più veloce del frame rate del sensore.
+            </p>
+          </div>
+          <div class="decision-card">
+            <span class="dec-icon">🛡️</span>
+            <h4>Concorrenza RTOS & Persistenza Atomica</h4>
+            <p>
+              Su Scheda B un <code>gdisp_mutex</code> serializza gli accessi SPI tra transizioni di schermata e tick cursore a 50 Hz. Sull'<strong>ESP8266</strong> il listino prezzi
+              (in centesimi/kg <code>uint32_t</code>) viene salvato in flash LittleFS scrivendo prima un file <code>.tmp</code>, verificandolo byte-per-byte e poi rinominandolo atomicamente.
+            </p>
+          </div>
+          <div class="decision-card">
+            <span class="dec-icon">🧪</span>
+            <h4>Reverse Engineering del Display & K.I.T.T.</h4>
+            <p>
+              Il modulo RobotDyn <code>2× 74HC595</code> privo di schema elettrico è stato mappato empiricamente (scoprendo l'inversione chip near/far e la rotazione ciclica dei digit <code>{4,5,6,7,0,1,2,3}</code>).
+              Durante la taratura al boot, un thread dedicato esegue uno scanner luminoso stile <strong>Knight Rider</strong> (attivabile anche come easter egg tenendo premuto il tasto B1).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: DUAL-USE SCENARIOS -->
+    <section id="scenari" class="section">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-kicker">VERSATILITÀ APPLICATIVA</span>
+          <h2>Un solo hardware. Tre domini critici.</h2>
+          <p class="section-intro">
+            L'interfaccia di PONDULO nasce modulare: con un singolo gesto dalla Home l'operatore cambia contesto operativo,
+            trasformando il dispositivo da bilancia commerciale touchless a terminale clinico sterile.
+          </p>
+        </div>
+
+        <div class="scenario-tabs" role="tablist">
+          <button class="tab-btn active" data-tab="food" role="tab" aria-selected="true">🥩 Food & Retail (Macelleria)</button>
+          <button class="tab-btn" data-tab="clinical" role="tab" aria-selected="false">🏥 Ambiente Clinico & Sala</button>
+          <button class="tab-btn" data-tab="chemical" role="tab" aria-selected="false">⚗️ Laboratorio Chimico</button>
+        </div>
+
+        <div class="scenario-panel active" id="tab-food">
+          <div class="scenario-copy">
+            <h3>Igiene totale al banco freschi</h3>
+            <p>
+              In macellerie, pescherie, gastronomie e supermercati l'operatore alterna continuamente la manipolazione di alimenti crudi
+              con la digitazione su tastiere o touchscreen condivisi — uno dei principali vettori di <strong>contaminazione crociata</strong>.
+            </p>
+            <ul>
+              <li><strong>Carosello 2×2 touchless:</strong> selezione rapida di Manzo, Pollo, Maiale, Agnello (espandibile via SD/Wi-Fi).</li>
+              <li><strong>Calcolo real-time:</strong> peso dalla cella di carico × €/kg aggiornato via Web UI ESP8266.</li>
+              <li><strong>Moltiplicatore & Carrello multi-riga:</strong> tastierino numerico in aria per quantità e riepilogo scontrino con cue acustico.</li>
+            </ul>
+          </div>
+          <div class="scenario-mockup">
+            <div class="mock-screen">
+              <div class="mock-bar"><span>BILANCIA · MANZO</span><span>ToF ACTIVE</span></div>
+              <div class="mock-body">
+                <div class="mock-sub">Prezzo: 18,90 €/kg · Peso: 645 g</div>
+                <div class="mock-total">Totale: 12.19 EUR</div>
+                <div class="mock-btns">
+                  <span class="mb-blue">+ CARRELLO</span>
+                  <span class="mb-green mb-focus">STAMPA<i class="mb-dwell"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="scenario-panel" id="tab-clinical">
+          <div class="scenario-copy">
+            <h3>Salvaguardia della catena sterile</h3>
+            <p>
+              In ambulatori, sale operatorie e reparti ospedalieri, consultare dati clinici o pesare campioni biologici senza toccare
+              superfici non sterili azzera i tempi di cambio guanti e riduce il rischio di infezioni correlate all'assistenza (ICA).
+            </p>
+            <ul>
+              <li><strong>Cartella Clinica Touchless:</strong> visualizzazione immediata di Frequenza Cardiaca (BPM), Pressione Arteriosa, SpO₂ e Temperatura.</li>
+              <li><strong>Anamnesi con Air-Swipe:</strong> sfogliamento gestuale di età, gruppo sanguigno, allergie, terapia in corso e reparto.</li>
+              <li><strong>Feedback acustico discreto:</strong> conferma sonora che evita all'operatore di distogliere lo sguardo dal campo sterile.</li>
+            </ul>
+          </div>
+          <div class="scenario-mockup">
+            <div class="mock-screen mock-clinical">
+              <div class="mock-bar"><span>CLINICO · PAZIENTE #01</span><span>STERILE MODE</span></div>
+              <div class="mock-body">
+                <div class="vitals-grid">
+                  <div><small>FC</small><strong>72 bpm</strong></div>
+                  <div><small>PA</small><strong>120/80</strong></div>
+                  <div><small>SpO₂</small><strong>98%</strong></div>
+                  <div><small>TEMP</small><strong>36.7°C</strong></div>
+                </div>
+                <div class="mock-sub">Swipe SX/DX → Scheda Anamnesi & Allergie</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="scenario-panel" id="tab-chemical">
+          <div class="scenario-copy">
+            <h3>Dosaggio sicuro sotto cappa chimica</h3>
+            <p>
+              Quando si manipolano solventi, acidi o polveri reagenti con guanti in nitrile spessi, i touchscreen capacitivi falliscono
+              e i tasti meccanici rischiano la contaminazione chimica. Il laser ToF 940 nm funziona perfettamente anche con guanti protettivi.
+            </p>
+            <ul>
+              <li><strong>Tara & Hold senza contatto:</strong> azzeramento della beuta con un gesto di profondità senza toccare la bilancia.</li>
+              <li><strong>Immunità ottica:</strong> il dToF misura il tempo di volo, indipendentemente dal colore scuro o traslucido dei guanti DPI.</li>
+              <li><strong>Registrazione sicura:</strong> predisposizione per logging automatico delle pesate su server LIMS aziendale via Wi-Fi.</li>
+            </ul>
+          </div>
+          <div class="scenario-mockup">
+            <div class="mock-screen mock-chem">
+              <div class="mock-bar"><span>LAB MODE · DOSAGGIO</span><span>AUTO-ZERO</span></div>
+              <div class="mock-body">
+                <div class="mock-sub">Reagente: NaCl · Tara beuta: 42.10 g</div>
+                <div class="mock-total" style="color:#38bdf8;">NETTO: 12.45 g</div>
+                <div class="mock-sub">Mano &lt; 90 mm → Registra lotto su LIMS</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: FUTURE ROADMAP & INDUSTRIALIZATION -->
+    <section id="roadmap" class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-kicker">EVOLUZIONE · VERSO PONDULO 2.0</span>
+          <h2>Potenzialità ed espansioni future.</h2>
+          <p class="section-intro">
+            PONDULO è nato in pochi giorni intensivi di HackFest come dimostratore funzionante, ma la sua architettura apre
+            la strada a una linea completa di strumenti touchless industrializzabili.
+          </p>
+        </div>
+
+        <div class="roadmap-grid">
+          <article class="road-card">
+            <span class="road-phase">FASE 1 · HARDWARE</span>
+            <h4>Consolidamento Single-MCU & PCB Custom</h4>
+            <p>Unificare le tre schede Nucleo e l'ESP8266 su un'unica scheda custom 4-layer con <strong>STM32H7 / STM32WB</strong> (o STM32G4 + co-processore Wi-Fi/BLE), riducendo ingombri, cablaggi e costi BOM del 70%.</p>
+          </article>
+          <article class="road-card">
+            <span class="road-phase">FASE 2 · MECCANICA</span>
+            <h4>Scocca sigillata IP65 lavabile</h4>
+            <p>Passaggio da PLA prototipale a scocca in polimero medical-grade / acciaio inox con vetro ottico IR-transparent sul VL53L7CX e guarnizioni siliconiche per sanificazione diretta a getto.</p>
+          </article>
+          <article class="road-card">
+            <span class="road-phase">FASE 3 · EDGE AI</span>
+            <h4>Riconoscimento gesti con STM32Cube.AI</h4>
+            <p>Sostituire la FSM cinematica con una rete neurale compatta addestrata sulle mappe di profondità 8×8 direttamente su MCU (pinch-to-tare, rotazione polso, riconoscimento mano sinistra/destra).</p>
+          </article>
+          <article class="road-card">
+            <span class="road-phase">FASE 4 · CONNETTIVITÀ</span>
+            <h4>Sync bidirezionale Cloud, ERP & Stampante</h4>
+            <p>Protocollo UART/MQTT con CRC, ACK e sincronizzazione automatica al boot, stampa termica diretta di etichette adesive con barcode/QR e dashboard multi-bilancia per catene GDO o reparti ospedalieri.</p>
+          </article>
+          <article class="road-card">
+            <span class="road-phase">FASE 5 · SICUREZZA</span>
+            <h4>Autenticazione Operatore NFC / RFID</h4>
+            <p>Avvicinando il badge personale (senza contatto) il terminale carica il profilo dell'operatore, traccia ogni pesata o accesso alla cartella clinica per conformità HACCP e GDPR sanitario.</p>
+          </article>
+          <article class="road-card">
+            <span class="road-phase">FASE 6 · METROLOGIA</span>
+            <h4>Cella compensata in temperatura & Certificazione</h4>
+            <p>Integrazione di un sensore di temperatura locale per compensazione termica automatica, bolla digitale tramite MEMS IMU ST (LSM6DSO) per avviso di piano non livellato e taratura certificabile OIML.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: NISC 2026 & TEAM 6 -->
+    <section id="team" class="section">
+      <div class="container">
+        <div class="team-banner">
+          <div class="team-logos">
+            <img src="assets/media/logo_neapolis.png" alt="NeaPolis Innovation" class="partner-logo" />
+            <img src="assets/media/logo_hackfest.png" alt="HackFest — Sfida finale all'ultimo bit" class="partner-logo" />
+          </div>
+          <span class="section-kicker">COLLABORAZIONE STMICROELECTRONICS · AGO–SET 2026</span>
+          <h2>Nato al NISC 2026 — Team 6</h2>
+          <p class="section-intro">
+            Sviluppato durante la 13ª edizione del <strong>NeaPolis Innovation Summer Campus</strong> promosso da
+            <strong>STMicroelectronics</strong> in collaborazione con gli atenei campani, con kit hardware STM32 forniti da ST e progettazione meccanica, elettronica e firmware curata interamente dal Team 6.
+          </p>
+
+          <div class="team-grid">
+            <div class="member-card">
+              <strong>Emanuel Chirico</strong>
+              <span>Università degli Studi di Salerno</span>
+            </div>
+            <div class="member-card">
+              <strong>Alessia Giamundo</strong>
+              <span>Università di Napoli Federico II</span>
+            </div>
+            <div class="member-card">
+              <strong>Gianluigi Esposito</strong>
+              <span>Università di Napoli Federico II</span>
+            </div>
+            <div class="member-card">
+              <strong>Vincenzo D’Ambrosio</strong>
+              <span>Università della Campania "Luigi Vanvitelli"</span>
+            </div>
+            <div class="member-card">
+              <strong>Federico Longobardi</strong>
+              <span>Università degli Studi di Trento</span>
+            </div>
+            <div class="member-card">
+              <strong>Lucia Cerullo</strong>
+              <span>Università di Napoli Federico II</span>
+            </div>
+            <div class="member-card">
+              <strong>Matteo Saccone</strong>
+              <span>Università di Napoli Federico II</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="brand-dot"></span>
+        <strong>PONDULO</strong> · Progetto NISC 2026 (Team 6 · STMicroelectronics)
+      </div>
+      <div class="footer-links">
+        <a href="#top">Torna al modello 3D ↑</a>
+        <a href="https://www.vincenzonet.it" target="_blank" rel="noopener">Portfolio Vincenzo D'Ambrosio ↗</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- GSAP & ScrollTrigger -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

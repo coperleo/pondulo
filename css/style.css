@@ -1078,17 +1078,22 @@ code {
 }
 .member-card strong { display: block; font-size: 0.96rem; margin-bottom: 0.15rem; }
 .member-card span { font-size: 0.78rem; color: var(--text-muted); }
+.member-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
 .member-cta {
-  margin-top: 0.8rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
+  gap: 0.42rem;
   width: 100%;
-  padding: 0.52rem 0.85rem;
+  padding: 0.46rem 0.75rem;
   border-radius: 8px;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.73rem;
   font-weight: 500;
   color: #e0f2fe;
   background: rgba(56, 189, 248, 0.14);
@@ -1102,7 +1107,18 @@ code {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(56, 189, 248, 0.22);
 }
-.member-cta span { color: inherit; font-size: 0.85rem; }
+.member-cta-gh {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+.member-cta-gh:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+.member-cta span { color: inherit; font-size: 0.84rem; }
 
 /* Footer */
 .footer {

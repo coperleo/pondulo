@@ -1079,23 +1079,25 @@ code {
 .member-card strong { display: block; font-size: 0.96rem; margin-bottom: 0.15rem; }
 .member-card span { font-size: 0.78rem; color: var(--text-muted); }
 .member-actions {
-  margin-top: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.9rem;
   display: flex;
   flex-direction: column;
-  gap: 0.42rem;
+  gap: 0.5rem;
 }
 .member-social-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.42rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem;
 }
 .member-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.38rem;
+  gap: 0.36rem;
   width: 100%;
-  padding: 0.46rem 0.65rem;
+  min-width: 0;
+  padding: 0.48rem 0.55rem;
   border-radius: 8px;
   font-family: var(--font-mono);
   font-size: 0.72rem;

@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
-  <link rel="stylesheet" href="css/style.css?v=4" />
+  <link rel="stylesheet" href="css/style.css?v=5" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -29,8 +29,7 @@
   <header class="topbar" id="topbar">
     <div class="topbar-inner">
       <a href="#top" class="brand" aria-label="PONDULO Home">
-        <img src="assets/media/pondulo_icon.png" alt="" class="brand-icon" />
-        <img src="assets/media/pondulo_wordmark.png" alt="PONDULO" class="brand-wordmark" />
+        <img src="assets/media/pondulo_icon.png" alt="PONDULO" class="brand-icon brand-icon-lg" />
         <span class="brand-tag">NISC 2026</span>
       </a>
       <nav class="nav-links" aria-label="Sezioni">
@@ -43,9 +42,15 @@
         <a href="#roadmap">Roadmap</a>
         <a href="#team">Team 6</a>
       </nav>
-      <a href="https://www.pepite.info/blog/neapolis-innovation-summer-campus-2026-i-vincitori/#:~:text=Team%206%3A%20%E2%80%9CPONDULO%E2%80%9D" class="back-portfolio" target="_blank" rel="noopener noreferrer">
-        🏆 1° Premio · Pepite <span>↗</span>
-      </a>
+      <div class="topbar-actions">
+        <a href="https://github.com/EmanuelChirico/Pondulo" class="back-portfolio topbar-gh" target="_blank" rel="noopener noreferrer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.05 11.05 0 0 1 5.8 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.27 5.68.42.36.79 1.07.79 2.15 0 1.55-.01 2.8-.01 3.18 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+          Codice <span>↗</span>
+        </a>
+        <a href="https://www.pepite.info/blog/neapolis-innovation-summer-campus-2026-i-vincitori/#:~:text=Team%206%3A%20%E2%80%9CPONDULO%E2%80%9D" class="back-portfolio" target="_blank" rel="noopener noreferrer">
+          🏆 1° Premio · Pepite <span>↗</span>
+        </a>
+      </div>
     </div>
   </header>
 
@@ -128,7 +133,7 @@
             NeaPolis Innovation Summer Campus 2026 · STMicroelectronics
           </div>
           <h1 class="hero-wordmark">
-            <img src="assets/media/pondulo_wordmark.png" alt="PONDULO" />
+            <img src="assets/media/pondulo_wordmark.png?v=2" alt="PONDULO" />
           </h1>
           <p class="hero-lead">
             La bilancia intelligente <strong>100% touchless</strong> per ambienti sterili e alimentari.
@@ -386,13 +391,16 @@
     <!-- SECTION: LIVE DEMO & GALLERY -->
     <section id="demo-live" class="section">
       <div class="container">
-        <div class="section-head">
-          <span class="section-kicker">PROTOTIPO REALE · NISC 2026</span>
-          <h2>Dal CAD al banco di prova, in azione.</h2>
-          <p class="section-intro">
-            Nessun render finto: PONDULO è stato progettato, stampato, cablato e testato dal vivo durante l'HackFest finale presso STMicroelectronics.
-            Nel video si osserva il flusso reale: navigazione dei menu a mano libera, pesatura con lettura istantanea sui due display, tastierino touchless e stampa scontrino.
-          </p>
+        <div class="section-head-row">
+          <div class="section-head">
+            <span class="section-kicker">PROTOTIPO REALE · NISC 2026</span>
+            <h2>Dal CAD al banco di prova, in azione.</h2>
+            <p class="section-intro">
+              Nessun render finto: PONDULO è stato progettato, stampato, cablato e testato dal vivo durante l'HackFest finale presso STMicroelectronics.
+              Nel video si osserva il flusso reale: navigazione dei menu a mano libera, pesatura con lettura istantanea sui due display, tastierino touchless e stampa scontrino.
+            </p>
+          </div>
+          <img src="assets/media/pondulo_mascot.png" alt="" class="section-mascot" loading="lazy" aria-hidden="true" />
         </div>
 
         <div class="demo-grid">
@@ -515,6 +523,22 @@
             </p>
           </div>
         </div>
+
+        <!-- Official Firmware Repository CTA -->
+        <div class="repo-cta-banner">
+          <div class="repo-cta-left">
+            <img src="assets/media/pondulo_icon.png" alt="PONDULO" class="repo-cta-icon" loading="lazy" />
+            <div>
+              <span class="repo-cta-kicker">OPEN SOURCE · REPOSITORY UFFICIALE</span>
+              <h4>Tutto il firmware STM32, ChibiOS/RT, uGFX &amp; ESP8266</h4>
+              <p>Esplora i sorgenti completi delle tre schede Nucleo (<code>cursorSensor</code>, <code>DEMO7</code>, <code>bilanciaFinale</code>), lo sketch Wi-Fi e la documentazione della pipeline ToF.</p>
+            </div>
+          </div>
+          <a href="https://github.com/EmanuelChirico/Pondulo" class="repo-cta-btn" target="_blank" rel="noopener noreferrer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.05 11.05 0 0 1 5.8 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.27 5.68.42.36.79 1.07.79 2.15 0 1.55-.01 2.8-.01 3.18 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+            Codice su GitHub <span>↗</span>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -522,7 +546,10 @@
     <section id="scenari" class="section">
       <div class="container">
         <div class="section-head">
-          <span class="section-kicker">VERSATILITÀ APPLICATIVA</span>
+          <div class="kicker-with-icon">
+            <img src="assets/media/pondulo_icon.png" alt="" class="inline-app-icon" loading="lazy" aria-hidden="true" />
+            <span class="section-kicker">VERSATILITÀ APPLICATIVA</span>
+          </div>
           <h2>Un solo hardware. Tre domini critici.</h2>
           <p class="section-intro">
             L'interfaccia di PONDULO nasce modulare: con un singolo gesto dalla Home l'operatore cambia contesto operativo,
@@ -623,13 +650,16 @@
     <!-- SECTION: FUTURE ROADMAP & INDUSTRIALIZATION -->
     <section id="roadmap" class="section section-alt">
       <div class="container">
-        <div class="section-head">
-          <span class="section-kicker">EVOLUZIONE · VERSO PONDULO 2.0</span>
-          <h2>Potenzialità ed espansioni future.</h2>
-          <p class="section-intro">
-            PONDULO è nato in pochi giorni intensivi di HackFest come dimostratore funzionante, ma la sua architettura apre
-            la strada a una linea completa di strumenti touchless industrializzabili.
-          </p>
+        <div class="section-head-row">
+          <div class="section-head">
+            <span class="section-kicker">EVOLUZIONE · VERSO PONDULO 2.0</span>
+            <h2>Potenzialità ed espansioni future.</h2>
+            <p class="section-intro">
+              PONDULO è nato in pochi giorni intensivi di HackFest come dimostratore funzionante, ma la sua architettura apre
+              la strada a una linea completa di strumenti touchless industrializzabili.
+            </p>
+          </div>
+          <img src="assets/media/pondulo_mascot.png" alt="" class="section-mascot section-mascot-flip" loading="lazy" aria-hidden="true" />
         </div>
 
         <div class="roadmap-grid">
@@ -753,11 +783,12 @@
     <div class="container footer-inner">
       <div class="footer-brand">
         <img src="assets/media/pondulo_icon.png" alt="" class="footer-icon" />
-        <img src="assets/media/pondulo_wordmark.png" alt="PONDULO" class="footer-wordmark" />
+        <img src="assets/media/pondulo_wordmark.png?v=2" alt="PONDULO" class="footer-wordmark" />
         <span>· Progetto NISC 2026 (Team 6 · STMicroelectronics)</span>
       </div>
       <div class="footer-links">
         <a href="#top">Torna al modello 3D ↑</a>
+        <a href="https://github.com/EmanuelChirico/Pondulo" target="_blank" rel="noopener noreferrer">Repository Codice ↗</a>
         <a href="https://www.vincenzonet.it" target="_blank" rel="noopener">Portfolio Vincenzo D'Ambrosio ↗</a>
       </div>
     </div>

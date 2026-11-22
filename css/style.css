@@ -86,12 +86,28 @@ code {
   border-radius: 7px;
   object-fit: cover;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s ease;
 }
+.brand-icon-lg {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+}
+.brand:hover .brand-icon { transform: scale(1.06) rotate(-3deg); }
 
-.brand-wordmark {
-  height: 22px;
-  width: auto;
-  display: block;
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.topbar-gh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.topbar-gh:hover {
+  border-color: var(--cyan);
+  background: rgba(56, 189, 248, 0.14);
 }
 
 .brand-dot {
@@ -740,6 +756,111 @@ code {
   max-width: 760px;
   margin-bottom: 3.2rem;
 }
+.section-head-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+.section-head-row .section-head {
+  margin-bottom: 0;
+}
+.section-mascot {
+  width: 118px;
+  height: auto;
+  flex-shrink: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.5));
+  animation: mascotFloat 4.2s ease-in-out infinite;
+}
+.section-mascot-flip {
+  animation: mascotFloatFlip 4.6s ease-in-out infinite;
+}
+@keyframes mascotFloatFlip {
+  0%, 100% { transform: scaleX(-1) translateY(0) rotate(-1.5deg); }
+  50% { transform: scaleX(-1) translateY(-7px) rotate(1.5deg); }
+}
+
+.kicker-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.65rem;
+}
+.kicker-with-icon .section-kicker { margin-bottom: 0; }
+.inline-app-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Official Firmware Repo CTA Banner */
+.repo-cta-banner {
+  margin-top: 2rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(16, 22, 34, 0.92), rgba(22, 16, 22, 0.92));
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.repo-cta-left {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  flex: 1 1 420px;
+}
+.repo-cta-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+.repo-cta-kicker {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+  margin-bottom: 0.25rem;
+}
+.repo-cta-left h4 {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  margin: 0 0 0.25rem;
+}
+.repo-cta-left p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+.repo-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.78rem 1.35rem;
+  border-radius: 99px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--red);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px var(--red-glow);
+  white-space: nowrap;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.repo-cta-btn:hover {
+  transform: translateY(-2px);
+  background: #ff473a;
+  box-shadow: 0 12px 28px rgba(239, 59, 45, 0.45);
+}
 .section-kicker {
   display: inline-block;
   font-family: var(--font-mono);
@@ -1229,4 +1350,7 @@ code {
   .component-drawer.open { transform: translateY(0); }
   .team-banner { padding: 2.6rem 1.2rem 2rem; margin-top: 3.2rem; }
   .team-mascot { width: 92px; top: -58px; right: 18px; }
+  .section-head-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .section-mascot { width: 84px; align-self: flex-end; }
+  .topbar-gh { display: none; }
 }

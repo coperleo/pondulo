@@ -1069,6 +1069,8 @@ code {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
 }
 .member-highlight {
   border-color: rgba(239, 59, 45, 0.55);
@@ -1076,31 +1078,31 @@ code {
 }
 .member-card strong { display: block; font-size: 0.96rem; margin-bottom: 0.15rem; }
 .member-card span { font-size: 0.78rem; color: var(--text-muted); }
-.member-head {
-  display: flex;
+.member-cta {
+  margin-top: 0.8rem;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.15rem;
-}
-.member-head strong { margin-bottom: 0; }
-.member-link {
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.52rem 0.85rem;
+  border-radius: 8px;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--cyan);
-  padding: 0.16rem 0.5rem;
-  border-radius: 99px;
-  border: 1px solid rgba(56, 189, 248, 0.32);
-  background: rgba(56, 189, 248, 0.08);
-  white-space: nowrap;
-  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: #e0f2fe;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
-.member-link:hover {
+.member-cta:hover {
+  background: rgba(56, 189, 248, 0.26);
   border-color: var(--cyan);
-  background: rgba(56, 189, 248, 0.2);
   color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.22);
 }
-.member-link span { color: inherit; font-size: inherit; }
+.member-cta span { color: inherit; font-size: 0.85rem; }
 
 /* Footer */
 .footer {

@@ -10,7 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="css/style.css?v=3" />
+  <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
+  <link rel="stylesheet" href="css/style.css?v=4" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -27,9 +28,9 @@
   <!-- Top Minimal Navigation -->
   <header class="topbar" id="topbar">
     <div class="topbar-inner">
-      <a href="#top" class="brand">
-        <span class="brand-dot"></span>
-        <span class="brand-name">PONDULO</span>
+      <a href="#top" class="brand" aria-label="PONDULO Home">
+        <img src="assets/media/pondulo_icon.png" alt="" class="brand-icon" />
+        <img src="assets/media/pondulo_wordmark.png" alt="PONDULO" class="brand-wordmark" />
         <span class="brand-tag">NISC 2026</span>
       </a>
       <nav class="nav-links" aria-label="Sezioni">
@@ -59,6 +60,7 @@
 
       <!-- Loading Overlay -->
       <div class="loader-overlay" id="loader-overlay">
+        <img src="assets/media/pondulo_icon.png" alt="PONDULO" class="loader-logo" />
         <div class="loader-ring"></div>
         <p class="loader-text">CARICAMENTO MODELLO 3D CAD · 2.1 MB</p>
       </div>
@@ -125,7 +127,9 @@
             <span class="eyebrow-dot"></span>
             NeaPolis Innovation Summer Campus 2026 · STMicroelectronics
           </div>
-          <h1>PONDULO</h1>
+          <h1 class="hero-wordmark">
+            <img src="assets/media/pondulo_wordmark.png" alt="PONDULO" />
+          </h1>
           <p class="hero-lead">
             La bilancia intelligente <strong>100% touchless</strong> per ambienti sterili e alimentari.
             Nessun tasto fisico, zero contaminazione crociata: tutto si controlla nell'aria con un sensore laser <strong>ToF 8×8</strong> e tre microcontrollori <strong>STM32G474RE</strong>.
@@ -667,6 +671,7 @@
     <section id="team" class="section">
       <div class="container">
         <div class="team-banner">
+          <img src="assets/media/pondulo_mascot.png" alt="Mascotte PONDULO" class="team-mascot" loading="lazy" />
           <div class="team-logos">
             <img src="assets/media/logo_neapolis.png" alt="NeaPolis Innovation" class="partner-logo" />
             <img src="assets/media/logo_hackfest.png" alt="HackFest — Sfida finale all'ultimo bit" class="partner-logo" />
@@ -747,8 +752,9 @@
   <footer class="footer">
     <div class="container footer-inner">
       <div class="footer-brand">
-        <span class="brand-dot"></span>
-        <strong>PONDULO</strong> · Progetto NISC 2026 (Team 6 · STMicroelectronics)
+        <img src="assets/media/pondulo_icon.png" alt="" class="footer-icon" />
+        <img src="assets/media/pondulo_wordmark.png" alt="PONDULO" class="footer-wordmark" />
+        <span>· Progetto NISC 2026 (Team 6 · STMicroelectronics)</span>
       </div>
       <div class="footer-links">
         <a href="#top">Torna al modello 3D ↑</a>

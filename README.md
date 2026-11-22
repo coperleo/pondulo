@@ -96,7 +96,7 @@ Progetto sviluppato durante la 13ª edizione del **NeaPolis Innovation Summer Ca
 - **Alessia Giamundo** — Università di Napoli Federico II
 - **Emanuel Chirico** — Università degli Studi di Salerno · [Sito](https://emanuelchirico.github.io/) · [GitHub](https://github.com/EmanuelChirico) · [LinkedIn](https://www.linkedin.com/in/emanuel-chirico-11946a395/)
 - **Federico Longobardi** — Università degli Studi di Trento
-- **Gianluigi Esposito** — Università di Napoli Federico II
+- **Gianluigi Esposito** — Università di Napoli Federico II · [LinkedIn](https://www.linkedin.com/in/gianluigi-esposito-a3910a229)
 - **Lucia Cerullo** — Università di Napoli Federico II
-- **Matteo Saccone** — Università di Napoli Federico II
+- **Matteo Saccone** — Università di Napoli Federico II · [LinkedIn](https://www.linkedin.com/in/matteo-saccone/)
 - **Vincenzo D’Ambrosio** — Università della Campania "Luigi Vanvitelli" · [Sito](https://www.vincenzonet.it) · [GitHub](https://github.com/coperleo) · [LinkedIn](https://www.linkedin.com/in/vincenzo-d-ambrosio-coperleo/)

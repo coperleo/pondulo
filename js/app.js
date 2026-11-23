@@ -278,7 +278,7 @@ const CHAPTER_PINS = [
 const CHAPTER_CARD_SIDE = [
   'left', 'right', 'left', 'right',
   'left', 'right', 'left', 'right',
-  'left', 'right', 'top', 'top',
+  'left', 'right', 'top', 'left',
 ];
 
 const CHAPTER_LABELS = [
@@ -333,12 +333,28 @@ camera.position.set(0.45, 2.25, 7.5);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.06;
-controls.enablePan = false;
-controls.minDistance = 2.6;
-controls.maxDistance = 14.0;
+controls.dampingFactor = 0.065;
+controls.enablePan = true;
+controls.screenSpacePanning = true;
+controls.panSpeed = 0.95;
+controls.rotateSpeed = 0.85;
+controls.zoomSpeed = 1.08;
+controls.minDistance = 1.15;
+controls.maxDistance = 16.5;
+controls.minPolarAngle = 0.05;
+controls.maxPolarAngle = Math.PI - 0.05;
 controls.target.set(0, 1.65, 0);
 controls.enabled = false;
+
+canvas.addEventListener('contextmenu', (e) => {
+  if (state.freeOrbit) e.preventDefault();
+});
+canvas.addEventListener('pointerdown', () => {
+  if (state.freeOrbit) canvas.style.cursor = 'grabbing';
+});
+window.addEventListener('pointerup', () => {
+  if (state.freeOrbit) canvas.style.cursor = 'grab';
+});
 
 // Studio Lighting
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.4);
@@ -867,11 +883,11 @@ function setupScrollChoreography() {
       onUpdate: (self) => {
         progressBar.style.width = `${(self.progress * 100).toFixed(1)}%`;
 
-        if (self.progress < 0.88 && state.manualOverride) {
+        if (self.progress < 0.84 && state.manualOverride) {
           state.manualOverride = false;
           if (state.freeOrbit) setFreeOrbit(false);
         }
-        dock.classList.toggle('visible', self.progress > 0.89);
+        dock.classList.toggle('visible', self.progress > 0.86);
       },
     },
   });
@@ -1040,30 +1056,52 @@ function setupScrollChoreography() {
     ease: 'power2.inOut',
   })
 
-  // 11 -> 12: Slow majestic orbit into Free Interactive Inspector
+  // 11 -> 12: Frame PONDULO cleanly on the RIGHT so Chapter 12 card on the left NEVER covers the model!
   .to(state, {
-    camX: isMobile ? -4.2 : -4.6,
-    camY: 2.95,
-    camZ: isMobile ? 9.2 : 8.0,
-    targetX: 0.0,
+    camX: isMobile ? -3.4 : -3.2,
+    camY: 2.85,
+    camZ: isMobile ? 9.0 : 8.2,
+    targetX: isMobile ? 0.0 : -0.95,
     targetY: 1.85,
-    modelRotY: 0.35,
+    modelRotY: 0.28,
     duration: 1.15,
     ease: 'sine.inOut',
   });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. INTERACTIVE INSPECTOR CONTROLS
+// 7. INTERACTIVE INSPECTOR CONTROLS (360° ORBIT + SCREEN-SPACE PAN + CLOSE ZOOM)
 // ─────────────────────────────────────────────────────────────────────────────
+
+function resetInspectorCamera() {
+  const isMobile = window.innerWidth < 768;
+  camera.position.set(isMobile ? 2.6 : 3.2, 2.65, isMobile ? 8.8 : 7.4);
+  controls.target.set(0.0, 1.85, 0.0);
+  controls.update();
+}
 
 function setFreeOrbit(enable) {
   state.freeOrbit = enable;
   controls.enabled = enable;
+  const stage = document.getElementById('top');
+  const banner = document.getElementById('orbit-mode-banner');
   const btn = document.getElementById('btn-orbit');
-  btn.classList.toggle('active', enable);
-  btn.textContent = enable ? 'Blocca Vista' : 'Ruota 360°';
+  if (stage) stage.classList.toggle('free-orbit-active', enable);
+  if (banner) {
+    banner.classList.toggle('visible', enable);
+    banner.setAttribute('aria-hidden', enable ? 'false' : 'true');
+  }
+  if (btn) {
+    btn.classList.toggle('active', enable);
+    btn.textContent = enable ? '✕ Esci da 360°' : '🧭 Esplora 360°';
+  }
   canvas.style.cursor = enable ? 'grab' : 'default';
+
+  // Center orbit pivot cleanly on PONDULO when entering 360° mode so rotation & pan feel natural!
+  if (enable) {
+    controls.target.set(0.0, 1.85, 0.0);
+    controls.update();
+  }
 }
 
 function setupInspectorControls() {
@@ -1074,7 +1112,9 @@ function setupInspectorControls() {
   const btnXray = document.getElementById('btn-xray');
   const btnBeam = document.getElementById('btn-beam');
   const btnPins = document.getElementById('btn-pins');
+  const btnResetCam = document.getElementById('btn-reset-cam');
   const btnOrbit = document.getElementById('btn-orbit');
+  const btnLaunch3d = document.getElementById('btn-launch-3d');
 
   ctrlExplode.addEventListener('input', () => {
     state.manualOverride = true;
@@ -1111,9 +1151,29 @@ function setupInspectorControls() {
     if (!state.showPinsToggle) closeDrawer();
   });
 
+  btnResetCam?.addEventListener('click', () => {
+    state.manualOverride = true;
+    if (!state.freeOrbit) setFreeOrbit(true);
+    resetInspectorCamera();
+  });
+
   btnOrbit.addEventListener('click', () => {
     state.manualOverride = true;
     setFreeOrbit(!state.freeOrbit);
+  });
+
+  btnLaunch3d?.addEventListener('click', () => {
+    state.manualOverride = true;
+    setFreeOrbit(true);
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (!state.freeOrbit) return;
+    if (e.key === 'Escape') {
+      setFreeOrbit(false);
+    } else if (e.key === 'r' || e.key === 'R') {
+      resetInspectorCamera();
+    }
   });
 }
 

@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
-  <link rel="stylesheet" href="css/style.css?v=8" />
+  <link rel="stylesheet" href="css/style.css?v=9" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -67,13 +67,19 @@
       <div class="loader-overlay" id="loader-overlay">
         <img src="assets/media/pondulo_icon.png" alt="PONDULO" class="loader-logo" />
         <div class="loader-ring"></div>
-        <p class="loader-text">CARICAMENTO MODELLO 3D CAD · 2.1 MB</p>
+        <p class="loader-text">CARICAMENTO MODELLO 3D CAD · 2.8 MB</p>
       </div>
 
       <!-- Subtle Telemetry Corner HUD -->
       <div class="stage-hud-top">
         <div class="hud-pill" id="hud-chapter">01 / 12 · PANORAMICA</div>
         <div class="hud-pill hud-mono" id="hud-telemetry">TILT 0° · X-RAY 0% · EXPLODE 0%</div>
+      </div>
+
+      <!-- Free 3D Mode Controls Banner (visible when 360° Free Mode is active) -->
+      <div class="orbit-mode-banner" id="orbit-mode-banner" aria-hidden="true">
+        <span class="orbit-live-dot"></span>
+        <span><strong>ESPLORAZIONE 3D LIBERA</strong> · SX: Ruota 360° · DX / Shift+SX: Trasla · Rotella: Zoom · <code>ESC</code> esci</span>
       </div>
 
       <!-- SVG Leader Lines connecting exact 3D anchor dots to de-overlapped badges -->
@@ -112,7 +118,8 @@
           <button class="dock-btn" id="btn-xray" type="button">Raggi X</button>
           <button class="dock-btn" id="btn-beam" type="button">Fascio ToF</button>
           <button class="dock-btn active" id="btn-pins" type="button">Etichette</button>
-          <button class="dock-btn dock-btn-primary" id="btn-orbit" type="button">Ruota 360°</button>
+          <button class="dock-btn" id="btn-reset-cam" type="button" title="Ricentra telecamera (R)">↺ Reset</button>
+          <button class="dock-btn dock-btn-primary dock-btn-pulse" id="btn-orbit" type="button">🧭 Esplora 360°</button>
         </div>
       </div>
 
@@ -369,14 +376,24 @@
       </article>
 
       <!-- 12 · FREE 360° INTERACTIVE INSPECTOR -->
-      <article class="chapter chapter-top" id="inspector-anchor" data-chapter="11">
-        <div class="chapter-card compact-card">
-          <span class="step-num">12 / 12 · INSPECTOR LIBERO</span>
-          <h2>Esplora PONDULO a mano libera.</h2>
+      <article class="chapter chapter-left chapter-inspector" id="inspector-anchor" data-chapter="11">
+        <div class="chapter-card inspector-card" id="inspector-card">
+          <span class="step-num">12 / 12 · INSPECTOR 3D LIBERO</span>
+          <h2>Esplora PONDULO in 3D a mano libera.</h2>
           <p>
-            Attiva <strong>Ruota 360°</strong> nella barra in basso, regola gli slider di <strong>Esploso</strong> e <strong>Inclinazione Testa</strong>,
-            attiva <strong>Raggi X</strong> o il <strong>Fascio ToF 8×8</strong> e clicca qualsiasi componente.
+            Entra in modalità libera per ispezionare da vicino ogni singolo pin delle <strong>3× STM32 NUCLEO-G474RE</strong>,
+            ruotare a 360°, <strong>traslare la vista</strong> in qualsiasi direzione e fare zoom ravvicinato.
           </p>
+          <button type="button" class="inspector-launch-btn" id="btn-launch-3d">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            Attiva Esplorazione 3D (360° · Trasla · Zoom)
+          </button>
+          <div class="inspector-controls-legend">
+            <span><strong>SX</strong> Ruota 360°</span>
+            <span><strong>DX / Shift</strong> Trasla (Pan)</span>
+            <span><strong>Rotella</strong> Zoom vicino</span>
+            <span><strong>Click pin</strong> Scheda tecnica</span>
+          </div>
         </div>
       </article>
 
@@ -899,6 +916,6 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=5"></script>
+  <script type="module" src="js/app.js?v=6"></script>
 </body>
 </html>

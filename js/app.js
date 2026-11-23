@@ -505,7 +505,7 @@ function attachXrayContour(mesh, targetList) {
 
 const loader = new GLTFLoader();
 loader.load(
-  'assets/pondulo.glb?v=2',
+  'assets/pondulo.glb?v=3',
   (gltf) => {
     ponduloRoot = gltf.scene;
     scene.add(ponduloRoot);

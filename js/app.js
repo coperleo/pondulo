@@ -495,56 +495,47 @@ function createToFBeamGroup() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3B. ILLUSTRATED CARTOON HAND FOR ToF GESTURE DEMO (INDEX CURSOR + AIR-SWIPE)
+// 3B. SMOOTH CHUBBY 3D CARTOON HAND (SDF-SCULPTED GLB) POINTING AT ToF SENSOR
 // ─────────────────────────────────────────────────────────────────────────────
 
 function createCartoonHandGroup() {
   const root = new THREE.Group();
-  // Floating in front of VL53L7CX sensor (headPivot local coords: sensor is at 0.54, 0.784, 0.716)
-  root.position.set(0.56, 0.76, 1.88);
-
-  const texLoader = new THREE.TextureLoader();
-  const texPoint = texLoader.load('assets/media/hand_point.png?v=1');
-  texPoint.colorSpace = THREE.SRGBColorSpace;
-  const texSwipe = texLoader.load('assets/media/hand_swipe.png?v=1');
-  texSwipe.colorSpace = THREE.SRGBColorSpace;
+  // Floating well in front of VL53L7CX sensor (headPivot local coords: sensor is at 0.54, 0.784, 0.716)
+  // Positioned clearly in front (+Z = 2.02) so it NEVER clips behind the red head shell!
+  root.position.set(0.56, 0.76, 2.02);
 
   const hand = new THREE.Group();
   root.add(hand);
 
-  const planeGeo = new THREE.PlaneGeometry(0.92, 0.92);
-  const pointMat = new THREE.MeshBasicMaterial({
-    map: texPoint,
-    transparent: true,
-    opacity: 1,
-    side: THREE.DoubleSide,
-    depthWrite: false,
-  });
-  const swipeMat = new THREE.MeshBasicMaterial({
-    map: texSwipe,
-    transparent: true,
-    opacity: 0,
-    side: THREE.DoubleSide,
-    depthWrite: false,
+  // Load smooth organic SDF-sculpted chubby 3D cartoon gloved hand (pointing index toward -Z!)
+  const handLoader = new GLTFLoader();
+  handLoader.load('assets/cartoon_hand.glb?v=1', (gltf) => {
+    const model = gltf.scene;
+    model.scale.setScalar(1.48);
+    model.traverse((o) => {
+      if (o.isMesh) {
+        o.castShadow = true;
+        o.receiveShadow = true;
+        if (o.material) {
+          o.material.depthWrite = true;
+          o.material.depthTest = true;
+        }
+      }
+    });
+    hand.add(model);
   });
 
-  const pointMesh = new THREE.Mesh(planeGeo, pointMat);
-  const swipeMesh = new THREE.Mesh(planeGeo, swipeMat);
-  swipeMesh.position.z = 0.005;
-  hand.add(pointMesh);
-  hand.add(swipeMesh);
-
-  // Subtle glowing yellow halo right near the pointing index fingertip
+  // Subtle glowing yellow target halo right in front of the pointing index fingertip (-0.14, 0.02, -0.44)
   const tipRingMat = new THREE.MeshBasicMaterial({
     color: 0xfacc15,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.82,
     side: THREE.DoubleSide,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  const tipRing = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.078, 24), tipRingMat);
-  tipRing.position.set(-0.36, 0.30, -0.02);
+  const tipRing = new THREE.Mesh(new THREE.RingGeometry(0.038, 0.062, 24), tipRingMat);
+  tipRing.position.set(-0.14, 0.024, -0.44);
   hand.add(tipRing);
 
   // Glowing Cyan Air-Swipe Arc Trail (lights up during Phase B Swipe!)
@@ -552,10 +543,10 @@ function createCartoonHandGroup() {
   for (let i = 0; i <= 24; i++) {
     const t = i / 24;
     const x = -0.44 + t * 0.88;
-    const y = Math.sin(t * Math.PI) * 0.13;
-    arcPts.push(new THREE.Vector3(x, y, -0.06));
+    const y = Math.sin(t * Math.PI) * 0.12;
+    arcPts.push(new THREE.Vector3(x, y, -0.44));
   }
-  const swipeTrailGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arcPts), 24, 0.015, 8, false);
+  const swipeTrailGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arcPts), 24, 0.014, 8, false);
   const swipeTrailMat = new THREE.MeshBasicMaterial({
     color: 0x38bdf8,
     transparent: true,
@@ -575,11 +566,11 @@ function createCartoonHandGroup() {
     depthWrite: false,
   });
   const spotMesh = new THREE.Mesh(new THREE.RingGeometry(0.048, 0.088, 24), spotMat);
-  spotMesh.position.set(0, 0, -0.46);
+  spotMesh.position.set(-0.12, 0.02, -0.64);
   root.add(spotMesh);
 
   root.visible = false;
-  root.userData = { hand, pointMesh, swipeMesh, pointMat, swipeMat, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat };
+  root.userData = { hand, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat };
   return root;
 }
 
@@ -903,8 +894,8 @@ function createLiveDisplays3D() {
     segTex.needsUpdate = true;
   }
 
-  renderTFT({});
-  renderSevenSeg(342.5);
+  renderTFT({ mode: 'boot', bootPct: 0.05 });
+  renderSevenSeg(0, 0);
   return { tftTex, segTex, renderTFT, renderSevenSeg };
 }
 
@@ -2052,12 +2043,10 @@ function applyRigState(elapsed) {
   if (cartoonHand) {
     cartoonHand.visible = bi > 0.15;
     if (cartoonHand.visible) {
-      const { hand, pointMat, swipeMat, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat } = cartoonHand.userData;
+      const { hand, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat } = cartoonHand.userData;
       const cyc = elapsed % 9.0;
       if (cyc < 5.2) {
-        // Phase A: Crisp illustrated pointing hand glides to STAMPA -> 1.5s Dwell -> Green confirmation!
-        pointMat.opacity = 1;
-        swipeMat.opacity = 0;
+        // Phase A: Chubby 3D hand points index finger directly at VL53L7CX -> glides cursor to STAMPA -> 1.5s Dwell!
         tipRing.visible = true;
         swipeTrailMat.opacity = 0;
         if (cyc < 2.2) {
@@ -2066,19 +2055,19 @@ function applyRigState(elapsed) {
           const hx = -0.22 + ease * 0.42;
           const hy = 0.12 - ease * 0.24;
           hand.position.set(hx, hy, 0);
-          hand.rotation.set(0.06, -0.18 - hx * 0.25, -hx * 0.18);
-          spotMesh.position.set(hx * 0.85, hy * 0.85, -0.46);
-          tipRingMat.opacity = 0.68;
-          spotMat.opacity = 0.72;
-          gestureTft = { mode: 'food', cursorX: 0.26 + ease * 0.50, cursorY: 0.46 + ease * 0.34, dwell: 0, flash: 0 };
+          hand.rotation.set(0.12 - hy * 0.35, -hx * 0.35, -hx * 0.18);
+          spotMesh.position.set(-0.12 + hx * 0.85, 0.02 + hy * 0.85, -0.64);
+          tipRingMat.opacity = 0.75;
+          spotMat.opacity = 0.75;
+          gestureTft = { mode: 'food', cursorX: 0.24 + ease * 0.52, cursorY: 0.44 + ease * 0.36, dwell: 0, flash: 0 };
         } else if (cyc < 4.2) {
           // Hold steady over STAMPA: Dwell fills 0 -> 100%!
           const dp = (cyc - 2.2) / 2.0;
-          hand.position.set(0.20, -0.12, -0.05 * Math.sin(dp * Math.PI));
-          hand.rotation.set(0.08, -0.22, -0.04);
-          spotMesh.position.set(0.17, -0.10, -0.46);
-          tipRingMat.opacity = 0.95;
-          spotMat.opacity = 0.92;
+          hand.position.set(0.20, -0.12, -0.06 * Math.sin(dp * Math.PI));
+          hand.rotation.set(0.16, -0.08, -0.04);
+          spotMesh.position.set(0.05, -0.08, -0.64);
+          tipRingMat.opacity = 0.96;
+          spotMat.opacity = 0.95;
           gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: dp, flash: 0 };
         } else {
           // Green confirmation flash!
@@ -2087,30 +2076,28 @@ function applyRigState(elapsed) {
           gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: 1.0, flash: 1.0 };
         }
       } else {
-        // Phase B: Crisp illustrated open palm Air-Swipe switching Macelleria -> Clinico!
-        pointMat.opacity = 0;
-        swipeMat.opacity = 1;
+        // Phase B: Smooth horizontal Air-Swipe across the ToF matrix switching Macelleria -> Clinico!
         tipRing.visible = false;
         const sp = (cyc - 5.2) / 3.8;
         if (sp < 0.38) {
           const t = sp / 0.38;
           const ease = 0.5 - 0.5 * Math.cos(t * Math.PI);
-          const sx = -0.36 + ease * 0.72;
-          hand.position.set(sx, Math.sin(t * Math.PI) * 0.11, -0.04);
-          hand.rotation.set(-0.05, 0.12, -0.22 + ease * 0.44);
+          const sx = -0.34 + ease * 0.68;
+          hand.position.set(sx, Math.sin(t * Math.PI) * 0.10, -0.04);
+          hand.rotation.set(0.08, 0.25 - ease * 0.5, -0.25 + ease * 0.5);
           swipeTrailMat.opacity = Math.sin(t * Math.PI) * 0.84;
-          spotMesh.position.set(sx * 0.8, Math.sin(t * Math.PI) * 0.08, -0.46);
+          spotMesh.position.set(-0.10 + sx * 0.8, 0.02 + Math.sin(t * Math.PI) * 0.08, -0.64);
           gestureTft = { mode: t > 0.55 ? 'clinical' : 'food', cursorX: 0.15 + ease * 0.70, cursorY: 0.52, dwell: 0, flash: 0 };
         } else if (sp < 0.78) {
           hand.position.set(0.32, 0.02, 0.04);
-          hand.rotation.set(0, 0.10, 0.12);
+          hand.rotation.set(0.06, -0.18, 0.12);
           swipeTrailMat.opacity = 0.12;
           gestureTft = { mode: 'clinical', cursorX: 0.78, cursorY: 0.52, dwell: 0, flash: 0 };
         } else {
           const t = (sp - 0.78) / 0.22;
           const sx = 0.32 - t * 0.54;
           hand.position.set(sx, Math.sin(t * Math.PI) * 0.08, 0);
-          hand.rotation.set(0, -0.08, 0.12 - t * 0.28);
+          hand.rotation.set(0.08, -0.15 + t * 0.3, 0.12 - t * 0.28);
           swipeTrailMat.opacity = Math.sin(t * Math.PI) * 0.6;
           gestureTft = { mode: t > 0.5 ? 'food' : 'clinical', cursorX: 0.78 - t * 0.52, cursorY: 0.50, dwell: 0, flash: 0 };
         }
@@ -2118,19 +2105,19 @@ function applyRigState(elapsed) {
     }
   }
 
-  // Throttle live CanvasTexture redraws to ~18 Hz (zero GPU stutter!)
+  // Throttle live CanvasTexture redraws to ~18 Hz (Hero Intro & ToF Gesture ALWAYS take priority over Simulator!)
   if (liveDisplays && elapsed - (liveDisplays._lastDraw || 0) > 0.055) {
     liveDisplays._lastDraw = elapsed;
     const sim = window.ponduloLiveSim;
-    if (sim && sim.overrideActive) {
-      liveDisplays.renderTFT(sim);
-      liveDisplays.renderSevenSeg(sim.weightG, sim.kittPos);
-    } else if (introTft) {
+    if (introTft) {
       liveDisplays.renderTFT(introTft);
       liveDisplays.renderSevenSeg(introSegWeight ?? 0, introKittPos);
     } else if (gestureTft) {
       liveDisplays.renderTFT({ ...gestureTft, weightG: 342.5 });
       liveDisplays.renderSevenSeg(342.5 + Math.sin(elapsed * 2.2) * 0.05);
+    } else if (sim && sim.overrideActive) {
+      liveDisplays.renderTFT(sim);
+      liveDisplays.renderSevenSeg(sim.weightG, sim.kittPos);
     } else {
       const wIdle = state.scrollProgress < 0.05 ? 0.0 : 342.5 + Math.sin(elapsed * 1.4) * 0.1;
       const dLive = state.scrollProgress < 0.05 ? 0 : 0.45 + 0.45 * (0.5 + 0.5 * Math.sin(elapsed * 1.6));

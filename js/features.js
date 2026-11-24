@@ -101,8 +101,9 @@ function initPonduloSimulator() {
     return Math.max(0, sim.weightG - sim.tareOffset);
   }
 
-  function sync3DModel() {
+  function sync3DModel(userInteracted = false) {
     if (!window.ponduloLiveSim) return;
+    if (!userInteracted && !window.ponduloLiveSim.overrideActive) return;
     const p = PRODUCTS[sim.prodIdx];
     window.ponduloLiveSim.overrideActive = true;
     window.ponduloLiveSim.mode = (sim.view === 'clinical' || sim.view === 'anamnesi') ? 'clinical' : 'food';
@@ -212,7 +213,7 @@ function initPonduloSimulator() {
       b.addEventListener('click', () => triggerAction(b.dataset.act));
     });
     updateCursorDOM();
-    sync3DModel();
+    sync3DModel(false);
   }
 
   function triggerAction(act) {
@@ -251,6 +252,7 @@ function initPonduloSimulator() {
       sim.cartCount = 0;
       sim.cartTotal = 0;
     }
+    sync3DModel(true);
     renderScreen();
   }
 
@@ -261,6 +263,7 @@ function initPonduloSimulator() {
     const next = (idx + (dir > 0 ? 1 : -1) + order.length) % order.length;
     sim.view = order[next];
     showToast(dir > 0 ? 'Air-Swipe DX → ($GS 2)' : '← Air-Swipe SX ($GS 1)');
+    sync3DModel(true);
     renderScreen();
   }
 
@@ -320,7 +323,7 @@ function initPonduloSimulator() {
     sim.handActive = true;
     updateHeatmap(u, v);
     updateCursorDOM();
-    sync3DModel();
+    sync3DModel(true);
   }
 
   pad.addEventListener('pointermove', (e) => handlePadMove(e.clientX, e.clientY));
@@ -378,8 +381,8 @@ function initPonduloSimulator() {
     if (weightSlider) weightSlider.value = String(g);
     if (weightVal) weightVal.textContent = `${getNetWeight().toFixed(1)} g`;
     renderSevenSegDOM();
+    sync3DModel(true);
     if (sim.view === 'scale') renderScreen();
-    else sync3DModel();
   }
 
   weightSlider?.addEventListener('input', () => setWeight(Number(weightSlider.value)));
@@ -396,8 +399,8 @@ function initPonduloSimulator() {
     if (weightVal) weightVal.textContent = '0.0 g';
     playTone(500, 0.08, 'sine', 750);
     renderSevenSegDOM();
+    sync3DModel(true);
     if (sim.view === 'scale') renderScreen();
-    else sync3DModel();
   });
 
   let kittTimer = null;
@@ -410,13 +413,13 @@ function initPonduloSimulator() {
       sim.kittDir = 1;
       kittTimer = setInterval(() => {
         renderSevenSegDOM();
-        sync3DModel();
+        sync3DModel(true);
         sim.kittPos += sim.kittDir;
         if (sim.kittPos >= 7 || sim.kittPos <= 0) sim.kittDir *= -1;
       }, 95);
     } else {
       renderSevenSegDOM();
-      sync3DModel();
+      sync3DModel(true);
     }
   });
 

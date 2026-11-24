@@ -429,47 +429,7 @@ function initPonduloSimulator() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. INTERACTIVE BEFORE/AFTER SLIDER (FUSION 360 CAD vs REAL PROTOTYPE)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function initCompareSlider() {
-  const wrap = document.getElementById('compare-stage');
-  const range = document.getElementById('compare-range');
-  const overlay = document.getElementById('compare-overlay');
-  const handle = document.getElementById('compare-handle');
-  const imgReal = document.getElementById('compare-img-real');
-  const imgCad = document.getElementById('compare-img-cad');
-  if (!wrap || !range || !overlay || !handle) return;
-
-  function applySplit(pct) {
-    const clamped = Math.max(4, Math.min(96, pct));
-    overlay.style.clipPath = `inset(0 ${100 - clamped}% 0 0)`;
-    handle.style.left = `${clamped}%`;
-    range.value = String(Math.round(clamped));
-  }
-
-  range.addEventListener('input', () => applySplit(Number(range.value)));
-
-  document.querySelectorAll('.compare-tab').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.compare-tab').forEach((b) => b.classList.toggle('active', b === btn));
-      const mode = btn.dataset.compare;
-      if (mode === 'base') {
-        imgReal.src = 'assets/media/internal_base.webp';
-        imgCad.src = 'assets/media/cad_base_compare.webp';
-      } else {
-        imgReal.src = 'assets/media/internal_head.webp';
-        imgCad.src = 'assets/media/cad_head_compare.webp';
-      }
-      applySplit(50);
-    });
-  });
-
-  applySplit(50);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. INTERACTIVE FILTERABLE BOM TABLE (CROSS-VERIFIED WITH EmanuelChirico/Pondulo)
+// 2. INTERACTIVE FILTERABLE BOM TABLE (CROSS-VERIFIED WITH EmanuelChirico/Pondulo)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BOM_ITEMS = [
@@ -643,6 +603,5 @@ function initBomTable() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initPonduloSimulator();
-  initCompareSlider();
   initBomTable();
 });

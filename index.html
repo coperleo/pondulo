@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
-  <link rel="stylesheet" href="css/style.css?v=11" />
+  <link rel="stylesheet" href="css/style.css?v=12" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -458,30 +458,6 @@
               <img src="assets/media/campus_side.webp" alt="Vista laterale di PONDULO al campus STMicroelectronics" loading="lazy" />
               <figcaption>Profilo laterale al banco di laboratorio STMicroelectronics (alimentazione 12V regolata a 5V).</figcaption>
             </figure>
-          </div>
-        </div>
-
-        <!-- Feature 4: Interactive Before/After CAD Blueprint vs Real Prototype Slider -->
-        <div class="compare-card">
-          <div class="compare-head">
-            <div>
-              <span class="compare-kicker" data-i18n="cmp_kicker">CONFRONTO 1:1 · CAD VS PROTOTIPO REALE</span>
-              <h3 data-i18n="cmp_title">Trascina il cursore: Blueprint Fusion 360 vs Hardware Reale</h3>
-            </div>
-            <div class="compare-tabs">
-              <button type="button" class="compare-tab active" data-compare="head" data-i18n="cmp_tab_head">Interno Testa</button>
-              <button type="button" class="compare-tab" data-compare="base" data-i18n="cmp_tab_base">Interno Base</button>
-            </div>
-          </div>
-          <div class="compare-stage" id="compare-stage">
-            <img src="assets/media/internal_head.webp" alt="Hardware reale interno PONDULO" id="compare-img-real" class="compare-img" loading="lazy" />
-            <div class="compare-overlay" id="compare-overlay">
-              <img src="assets/media/cad_head_compare.webp" alt="Blueprint CAD Fusion 360 interno PONDULO" id="compare-img-cad" class="compare-img" loading="lazy" />
-            </div>
-            <div class="compare-handle" id="compare-handle" aria-hidden="true"><span>⇄</span></div>
-            <span class="compare-pill compare-pill-left">CAD BLUEPRINT</span>
-            <span class="compare-pill compare-pill-right" data-i18n="cmp_pill_real">PROTOTIPO REALE</span>
-            <input type="range" id="compare-range" class="compare-range" min="4" max="96" value="50" aria-label="Confronta Blueprint CAD e foto reale" />
           </div>
         </div>
       </div>
@@ -1049,8 +1025,8 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=8"></script>
-  <script type="module" src="js/features.js?v=1"></script>
-  <script type="module" src="js/i18n.js?v=1"></script>
+  <script type="module" src="js/app.js?v=9"></script>
+  <script type="module" src="js/features.js?v=2"></script>
+  <script type="module" src="js/i18n.js?v=2"></script>
 </body>
 </html>

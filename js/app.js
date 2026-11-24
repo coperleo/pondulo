@@ -495,87 +495,67 @@ function createToFBeamGroup() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3B. STYLIZED 3D CARTOON HAND FOR ToF GESTURE DEMO (INDEX CURSOR + AIR-SWIPE)
+// 3B. ILLUSTRATED CARTOON HAND FOR ToF GESTURE DEMO (INDEX CURSOR + AIR-SWIPE)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function createCartoonHandGroup() {
   const root = new THREE.Group();
   // Floating in front of VL53L7CX sensor (headPivot local coords: sensor is at 0.54, 0.784, 0.716)
-  root.position.set(0.54, 0.76, 1.92);
+  root.position.set(0.56, 0.76, 1.88);
 
-  const gloveMat = new THREE.MeshStandardMaterial({
-    color: 0xfff4ea,
-    roughness: 0.42,
-    metalness: 0.04,
-  });
-  const outlineMat = new THREE.MeshBasicMaterial({
-    color: 0x111520,
-    side: THREE.BackSide,
-  });
-  const cuffMat = new THREE.MeshStandardMaterial({
-    color: 0x0ea5e9,
-    roughness: 0.35,
-    metalness: 0.15,
-    emissive: 0x0369a1,
-    emissiveIntensity: 0.35,
-  });
-  const tipRingMat = new THREE.MeshBasicMaterial({
-    color: 0xfacc15,
-    transparent: true,
-    opacity: 0.85,
-  });
-
-  function addOutlined(parent, geo, mat, pos, rot, scale = 1.075) {
-    const m = new THREE.Mesh(geo, mat);
-    if (pos) m.position.set(...pos);
-    if (rot) m.rotation.set(...rot);
-    const out = new THREE.Mesh(geo, outlineMat);
-    out.scale.setScalar(scale);
-    m.add(out);
-    parent.add(m);
-    return m;
-  }
+  const texLoader = new THREE.TextureLoader();
+  const texPoint = texLoader.load('assets/media/hand_point.png?v=1');
+  texPoint.colorSpace = THREE.SRGBColorSpace;
+  const texSwipe = texLoader.load('assets/media/hand_swipe.png?v=1');
+  texSwipe.colorSpace = THREE.SRGBColorSpace;
 
   const hand = new THREE.Group();
   root.add(hand);
 
-  // Palm (rounded cartoon cushion)
-  const palmGeo = new THREE.SphereGeometry(0.165, 22, 18);
-  palmGeo.scale(1.08, 1.15, 0.62);
-  addOutlined(hand, palmGeo, gloveMat, [0, -0.04, 0]);
+  const planeGeo = new THREE.PlaneGeometry(0.92, 0.92);
+  const pointMat = new THREE.MeshBasicMaterial({
+    map: texPoint,
+    transparent: true,
+    opacity: 1,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const swipeMat = new THREE.MeshBasicMaterial({
+    map: texSwipe,
+    transparent: true,
+    opacity: 0,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
 
-  // Wrist & cartoon cyan cuff
-  addOutlined(hand, new THREE.CylinderGeometry(0.115, 0.125, 0.14, 18), cuffMat, [0, -0.22, 0.03]);
+  const pointMesh = new THREE.Mesh(planeGeo, pointMat);
+  const swipeMesh = new THREE.Mesh(planeGeo, swipeMat);
+  swipeMesh.position.z = 0.005;
+  hand.add(pointMesh);
+  hand.add(swipeMesh);
 
-  // Pointing Index Finger (aimed forward -Z toward the VL53L7CX matrix!)
-  const indexGroup = new THREE.Group();
-  indexGroup.position.set(-0.075, 0.11, -0.02);
-  addOutlined(indexGroup, new THREE.CapsuleGeometry(0.044, 0.24, 10, 14), gloveMat, [0, 0.09, -0.14], [Math.PI * 0.36, 0, 0.08]);
-  // Glowing yellow cursor-tip halo at fingertip
-  const tipRing = new THREE.Mesh(new THREE.RingGeometry(0.042, 0.064, 24), tipRingMat);
-  tipRing.position.set(-0.02, 0.16, -0.29);
-  indexGroup.add(tipRing);
-  hand.add(indexGroup);
-
-  // Middle, Ring, Pinky fingers (curled in pointing mode, extend subtly during Air-Swipe!)
-  const otherFingers = new THREE.Group();
-  addOutlined(otherFingers, new THREE.CapsuleGeometry(0.041, 0.15, 8, 12), gloveMat, [ 0.015, 0.09, -0.05], [Math.PI * 0.62, 0, 0]);
-  addOutlined(otherFingers, new THREE.CapsuleGeometry(0.038, 0.13, 8, 12), gloveMat, [ 0.092, 0.07, -0.03], [Math.PI * 0.66, 0, -0.08]);
-  addOutlined(otherFingers, new THREE.CapsuleGeometry(0.034, 0.10, 8, 12), gloveMat, [ 0.155, 0.03,  0.00], [Math.PI * 0.68, 0, -0.16]);
-  hand.add(otherFingers);
-
-  // Cartoon Thumb
-  addOutlined(hand, new THREE.CapsuleGeometry(0.042, 0.14, 8, 12), gloveMat, [-0.155, 0.01, -0.02], [Math.PI * 0.28, 0.2, 0.55]);
+  // Subtle glowing yellow halo right near the pointing index fingertip
+  const tipRingMat = new THREE.MeshBasicMaterial({
+    color: 0xfacc15,
+    transparent: true,
+    opacity: 0.8,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const tipRing = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.078, 24), tipRingMat);
+  tipRing.position.set(-0.36, 0.30, -0.02);
+  hand.add(tipRing);
 
   // Glowing Cyan Air-Swipe Arc Trail (lights up during Phase B Swipe!)
   const arcPts = [];
   for (let i = 0; i <= 24; i++) {
     const t = i / 24;
-    const x = -0.34 + t * 0.68;
-    const y = Math.sin(t * Math.PI) * 0.11;
-    arcPts.push(new THREE.Vector3(x, y, -0.24));
+    const x = -0.44 + t * 0.88;
+    const y = Math.sin(t * Math.PI) * 0.13;
+    arcPts.push(new THREE.Vector3(x, y, -0.06));
   }
-  const swipeTrailGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arcPts), 24, 0.014, 8, false);
+  const swipeTrailGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arcPts), 24, 0.015, 8, false);
   const swipeTrailMat = new THREE.MeshBasicMaterial({
     color: 0x38bdf8,
     transparent: true,
@@ -583,10 +563,9 @@ function createCartoonHandGroup() {
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  const swipeTrail = new THREE.Mesh(swipeTrailGeo, swipeTrailMat);
-  root.add(swipeTrail);
+  root.add(new THREE.Mesh(swipeTrailGeo, swipeTrailMat));
 
-  // Active ToF laser target spot projected right onto the 8x8 cone plane
+  // Active ToF laser target ring projected onto the 8x8 cone plane
   const spotMat = new THREE.MeshBasicMaterial({
     color: 0xfacc15,
     transparent: true,
@@ -595,13 +574,115 @@ function createCartoonHandGroup() {
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  const spotMesh = new THREE.Mesh(new THREE.RingGeometry(0.045, 0.085, 24), spotMat);
-  spotMesh.position.set(0, 0, -0.45);
+  const spotMesh = new THREE.Mesh(new THREE.RingGeometry(0.048, 0.088, 24), spotMat);
+  spotMesh.position.set(0, 0, -0.46);
   root.add(spotMesh);
 
   root.visible = false;
-  root.userData = { hand, otherFingers, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat };
+  root.userData = { hand, pointMesh, swipeMesh, pointMat, swipeMat, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat };
   return root;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3B2. 3D SCULPTED FIORENTINA T-BONE STEAK FOR HERO BOOT & WEIGHING INTRO
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FIORENTINA_CONTOUR = [
+  [0.3493, 0.0832], [0.3376, 0.039], [0.3256, -0.0034], [0.312, -0.0448], [0.2946, -0.0851],
+  [0.2785, -0.1286], [0.2647, -0.1795], [0.2464, -0.235], [0.2182, -0.2901], [0.1791, -0.3425],
+  [0.1307, -0.394], [0.0716, -0.4274], [0.0063, -0.4193], [-0.0514, -0.3707], [-0.0878, -0.2816],
+  [-0.105, -0.1913], [-0.1297, -0.1489], [-0.1832, -0.1584], [-0.2346, -0.1554], [-0.2737, -0.1307],
+  [-0.3048, -0.0959], [-0.3346, -0.0573], [-0.3631, -0.0153], [-0.3831, 0.0318], [-0.3899, 0.0826],
+  [-0.387, 0.1341], [-0.3787, 0.1856], [-0.3714, 0.2393], [-0.3676, 0.2994], [-0.3617, 0.3659],
+  [-0.3343, 0.4212], [-0.2729, 0.4411], [-0.2051, 0.4427], [-0.1424, 0.4312], [-0.0824, 0.4013],
+  [-0.0367, 0.4065], [0.0059, 0.4349], [0.0526, 0.443], [0.1021, 0.443], [0.1558, 0.4439],
+  [0.2147, 0.4433], [0.272, 0.4296], [0.3223, 0.3992], [0.3655, 0.3595], [0.3838, 0.3028],
+  [0.3863, 0.242], [0.3775, 0.1838], [0.3632, 0.1308],
+];
+
+function createFiorentinaGroup() {
+  const group = new THREE.Group();
+  const S = 1.08; // ~10.8 cm wide thick-cut Fiorentina resting neatly inside the 13.4 cm platter!
+
+  // Clean butcher wax paper sheet (carta da macelleria) underneath the steak
+  const paperMat = new THREE.MeshStandardMaterial({
+    color: 0xf8f5ee,
+    roughness: 0.72,
+    metalness: 0.02,
+    transparent: true,
+    opacity: 0,
+  });
+  const paperGeo = new THREE.BoxGeometry(1.06, 0.008, 1.06);
+  const paper = new THREE.Mesh(paperGeo, paperMat);
+  paper.position.y = 0.005;
+  paper.rotation.y = 0.09;
+  paper.receiveShadow = true;
+  group.add(paper);
+
+  // Thick-cut 3D ExtrudeGeometry matching the exact Fiorentina silhouette!
+  const shape = new THREE.Shape();
+  FIORENTINA_CONTOUR.forEach(([ux, uy], i) => {
+    const x = ux * S;
+    const y = uy * S;
+    if (i === 0) shape.moveTo(x, y);
+    else shape.lineTo(x, y);
+  });
+  shape.closePath();
+
+  const extrudeGeo = new THREE.ExtrudeGeometry(shape, {
+    depth: 0.18,
+    bevelEnabled: true,
+    bevelThickness: 0.032,
+    bevelSize: 0.024,
+    bevelSegments: 4,
+    curveSegments: 12,
+  });
+  // Normalize UVs on top/bottom caps to [0..1] matching fiorentina_top.png!
+  const posAttr = extrudeGeo.attributes.position;
+  const uvAttr = extrudeGeo.attributes.uv;
+  for (let i = 0; i < posAttr.count; i++) {
+    const x = posAttr.getX(i);
+    const y = posAttr.getY(i);
+    uvAttr.setXY(i, x / S + 0.5, y / S + 0.5);
+  }
+  uvAttr.needsUpdate = true;
+
+  // Rotate so extrusion lies horizontally (+Y up)
+  extrudeGeo.rotateX(-Math.PI / 2);
+
+  const texLoader = new THREE.TextureLoader();
+  const topTex = texLoader.load('assets/media/fiorentina_top.png?v=1');
+  topTex.colorSpace = THREE.SRGBColorSpace;
+
+  const topMat = new THREE.MeshStandardMaterial({
+    map: topTex,
+    roughness: 0.36,
+    metalness: 0.04,
+    transparent: true,
+    opacity: 0,
+  });
+  const sideMat = new THREE.MeshStandardMaterial({
+    color: 0x9b2d30,
+    roughness: 0.44,
+    metalness: 0.04,
+    transparent: true,
+    opacity: 0,
+  });
+
+  const steakMesh = new THREE.Mesh(extrudeGeo, [topMat, sideMat]);
+  steakMesh.position.y = 0.042;
+  steakMesh.rotation.y = 0.22;
+  steakMesh.castShadow = true;
+  steakMesh.receiveShadow = true;
+  group.add(steakMesh);
+
+  // Subtle cream fat-cap bevel rim band around the side for extra realism
+  const mats = [paperMat, topMat, sideMat];
+  // Centered over weighing_plate (CAD X=0, Y=-27.45mm -> Three.js X=0, Z=+0.275, top Y=0.585)
+  group.position.set(0.0, 1.48, 0.275);
+  group.visible = false;
+  group.userData = { mats, baseY: 0.586 };
+  return group;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -630,11 +711,37 @@ function createLiveDisplays3D() {
     ctx.roundRect(x, y, w, h, r);
   }
 
-  function renderTFT({ mode = 'food', product = 'Manzo', price = 18.9, weightG = 342.5, cursorX = 0.78, cursorY = 0.78, dwell = 0.65, flash = 0 }) {
+  function renderTFT({ mode = 'food', product = 'Manzo', price = 18.9, weightG = 342.5, cursorX = 0.78, cursorY = 0.78, dwell = 0.65, flash = 0, bootPct = 0 }) {
     const ctx = tftCtx;
     const W = 640, H = 480;
     ctx.fillStyle = '#06090e';
     ctx.fillRect(0, 0, W, H);
+
+    if (mode === 'boot') {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, W, 74);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 30px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('PONDULO · AVVIO SISTEMA', W / 2, 37);
+
+      ctx.fillStyle = '#ef3b2d';
+      ctx.font = '700 36px monospace';
+      ctx.fillText('TARATURA HX711', W / 2, 192);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '500 22px monospace';
+      ctx.fillText('Auto-Zero & K.I.T.T. Check...', W / 2, 246);
+
+      roundRect(ctx, 84, 300, W - 168, 26, 13);
+      ctx.fillStyle = '#1e293b';
+      ctx.fill();
+      roundRect(ctx, 84, 300, Math.max(26, (W - 168) * Math.min(1, bootPct)), 26, 13);
+      ctx.fillStyle = '#ef3b2d';
+      ctx.fill();
+      tftTex.needsUpdate = true;
+      return;
+    }
 
     // Header
     ctx.fillStyle = mode === 'clinical' ? '#0b253a' : '#0f172a';
@@ -893,8 +1000,11 @@ let ponduloRoot = null;
 let headPivot = null;
 let tofBeam = null;
 let cartoonHand = null;
+let fiorentinaGroup = null;
 let dataFlowGroup = null;
 let liveDisplays = null;
+let introStartTime = null;
+let introFinished = false;
 const partMap = new Map();
 const origPos = new Map();
 const headShellMeshes = [];
@@ -1040,6 +1150,12 @@ loader.load(
       dataFlowGroup = createDataFlowGroup();
       headPivot.add(dataFlowGroup);
     }
+
+    // Add 3D Fiorentina T-Bone Steak to ponduloRoot for Hero K.I.T.T. -> 0 -> Weighing intro!
+    fiorentinaGroup = createFiorentinaGroup();
+    ponduloRoot.add(fiorentinaGroup);
+    introStartTime = null;
+    introFinished = false;
 
     buildHotspotDOM();
     setupScrollChoreography();
@@ -1853,67 +1969,148 @@ function applyRigState(elapsed) {
     }
   }
 
+  // ── HERO INTRO CHOREOGRAPHY: K.I.T.T. -> 0.00 -> FIORENTINA LANDS & WEIGHS -> VANISHES! ──
+  let introTft = null;
+  let introSegWeight = null;
+  let introKittPos = -1;
+  let platterDip = 0;
+
+  if (fiorentinaGroup && !introFinished) {
+    if (state.scrollProgress > 0.045) {
+      // User started scrolling immediately -> hide Fiorentina cleanly
+      introFinished = true;
+      fiorentinaGroup.visible = false;
+    } else {
+      if (introStartTime === null) introStartTime = elapsed;
+      const it = elapsed - introStartTime;
+      const { mats, baseY } = fiorentinaGroup.userData;
+
+      if (it < 2.4) {
+        // 0.0 - 2.4s: K.I.T.T. Knight Rider red scan on 7-seg + Boot screen on TFT!
+        fiorentinaGroup.visible = false;
+        const step = Math.floor(it / 0.11) % 14;
+        introKittPos = step < 8 ? step : 14 - step;
+        introTft = { mode: 'boot', bootPct: it / 2.4 };
+      } else if (it < 3.45) {
+        // 2.4 - 3.45s: Clean 0.00 g ready on both displays!
+        fiorentinaGroup.visible = false;
+        introSegWeight = 0.0;
+        introTft = { mode: 'food', product: 'Fiorentina', price: 32.0, weightG: 0.0, cursorX: 0.5, cursorY: 0.5, dwell: 0, flash: 0 };
+      } else if (it < 4.45) {
+        // 3.45 - 4.45s: 3D Fiorentina drops gracefully onto the white platter!
+        const p = (it - 3.45) / 1.0;
+        const ease = 1 - Math.pow(1 - p, 3);
+        const bounce = p > 0.82 ? Math.sin(((p - 0.82) / 0.18) * Math.PI) * 0.032 : 0;
+        fiorentinaGroup.visible = true;
+        fiorentinaGroup.position.y = baseY + (1 - ease) * 0.92 + bounce;
+        const op = Math.min(1, p * 2.4);
+        mats.forEach((m) => { m.opacity = op; });
+        platterDip = p > 0.78 ? -0.015 * Math.sin(((p - 0.78) / 0.22) * Math.PI * 0.5) : 0;
+        introSegWeight = p > 0.82 ? ((p - 0.82) / 0.18) * 420.0 : 0.0;
+        introTft = { mode: 'food', product: 'Fiorentina', price: 32.0, weightG: introSegWeight, cursorX: 0.52, cursorY: 0.55, dwell: 0, flash: 0 };
+      } else if (it < 7.85) {
+        // 4.45 - 7.85s: Live HX711 damped weighing settle -> 685.0 g (21.92 EUR) + Dwell OK!
+        const wt = it - 4.45;
+        fiorentinaGroup.visible = true;
+        fiorentinaGroup.position.y = baseY - 0.012;
+        mats.forEach((m) => { m.opacity = 1; });
+        platterDip = -0.012;
+        const settle = 685.0 * (1 - Math.exp(-wt * 3.4) * Math.cos(wt * 7.5) * 0.42);
+        introSegWeight = wt > 1.35 ? 685.0 : Math.max(0, settle);
+        const dwell = wt > 1.55 && wt < 2.95 ? (wt - 1.55) / 1.4 : (wt >= 2.95 ? 1.0 : 0);
+        const flash = wt >= 2.95 ? 1.0 : 0;
+        introTft = { mode: 'food', product: 'Fiorentina', price: 32.0, weightG: introSegWeight, cursorX: 0.76, cursorY: 0.80, dwell, flash };
+      } else if (it < 9.15) {
+        // 7.85 - 9.15s: Fiorentina lifts & fades away smoothly, leaving ONLY clean PONDULO!
+        const fp = (it - 7.85) / 1.3;
+        const ease = fp * fp;
+        fiorentinaGroup.visible = true;
+        fiorentinaGroup.position.y = baseY - 0.012 + ease * 0.65;
+        const op = Math.max(0, 1 - fp * 1.15);
+        mats.forEach((m) => { m.opacity = op; });
+        platterDip = -0.012 * (1 - fp);
+        introSegWeight = Math.max(0, 685.0 * (1 - Math.min(1, fp * 1.6)));
+        introTft = { mode: 'food', product: 'Manzo', price: 18.9, weightG: introSegWeight, cursorX: 0.5, cursorY: 0.5, dwell: 0, flash: 0 };
+      } else {
+        // 9.15s+: Everything vanishes cleanly -> only PONDULO remains at 0.00 g!
+        fiorentinaGroup.visible = false;
+        introFinished = true;
+      }
+    }
+  }
+
+  // Apply subtle platter micro-compression during Fiorentina landing
+  if (platterDip !== 0) {
+    const plateObj = partMap.get('weighing_plate');
+    const plateBase = origPos.get('weighing_plate');
+    if (plateObj && plateBase && state.exBase < 0.02) {
+      plateObj.position.y = plateBase.y + platterDip;
+    }
+  }
+
   let gestureTft = null;
   if (cartoonHand) {
     cartoonHand.visible = bi > 0.15;
     if (cartoonHand.visible) {
-      const { hand, otherFingers, tipRingMat, swipeTrailMat, spotMesh, spotMat } = cartoonHand.userData;
+      const { hand, pointMat, swipeMat, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat } = cartoonHand.userData;
       const cyc = elapsed % 9.0;
       if (cyc < 5.2) {
-        // Phase A: Index finger Air-Cursor glides to STAMPA -> 1.5s Dwell -> Green confirmation!
+        // Phase A: Crisp illustrated pointing hand glides to STAMPA -> 1.5s Dwell -> Green confirmation!
+        pointMat.opacity = 1;
+        swipeMat.opacity = 0;
+        tipRing.visible = true;
         swipeTrailMat.opacity = 0;
-        otherFingers.rotation.x = 0;
         if (cyc < 2.2) {
           const p = cyc / 2.2;
           const ease = 0.5 - 0.5 * Math.cos(p * Math.PI);
           const hx = -0.22 + ease * 0.42;
           const hy = 0.12 - ease * 0.24;
           hand.position.set(hx, hy, 0);
-          hand.rotation.set(0.08, -hx * 0.45, -hx * 0.25);
-          spotMesh.position.set(hx * 0.85, hy * 0.85, -0.45);
-          tipRingMat.opacity = 0.7;
+          hand.rotation.set(0.06, -0.18 - hx * 0.25, -hx * 0.18);
+          spotMesh.position.set(hx * 0.85, hy * 0.85, -0.46);
+          tipRingMat.opacity = 0.68;
           spotMat.opacity = 0.72;
           gestureTft = { mode: 'food', cursorX: 0.26 + ease * 0.50, cursorY: 0.46 + ease * 0.34, dwell: 0, flash: 0 };
         } else if (cyc < 4.2) {
-          // Hover steady over STAMPA: Dwell fills 0 -> 100%!
+          // Hold steady over STAMPA: Dwell fills 0 -> 100%!
           const dp = (cyc - 2.2) / 2.0;
           hand.position.set(0.20, -0.12, -0.05 * Math.sin(dp * Math.PI));
-          hand.rotation.set(0.1, -0.1, -0.05);
-          spotMesh.position.set(0.17, -0.10, -0.45);
+          hand.rotation.set(0.08, -0.22, -0.04);
+          spotMesh.position.set(0.17, -0.10, -0.46);
           tipRingMat.opacity = 0.95;
-          spotMat.opacity = 0.9;
+          spotMat.opacity = 0.92;
           gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: dp, flash: 0 };
         } else {
           // Green confirmation flash!
           hand.position.set(0.20, -0.12, 0.04);
+          tipRingMat.opacity = 1.0;
           gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: 1.0, flash: 1.0 };
         }
       } else {
-        // Phase B: Crisp Left->Right Air-Swipe switching Macelleria -> Clinico!
+        // Phase B: Crisp illustrated open palm Air-Swipe switching Macelleria -> Clinico!
+        pointMat.opacity = 0;
+        swipeMat.opacity = 1;
+        tipRing.visible = false;
         const sp = (cyc - 5.2) / 3.8;
         if (sp < 0.38) {
           const t = sp / 0.38;
           const ease = 0.5 - 0.5 * Math.cos(t * Math.PI);
-          const sx = -0.34 + ease * 0.68;
-          hand.position.set(sx, Math.sin(t * Math.PI) * 0.10, -0.04);
-          hand.rotation.set(-0.08, 0.18, -0.35 + ease * 0.7);
-          otherFingers.rotation.x = -0.55; // Open hand swipe pose!
-          swipeTrailMat.opacity = Math.sin(t * Math.PI) * 0.82;
-          spotMesh.position.set(sx * 0.8, Math.sin(t * Math.PI) * 0.08, -0.45);
+          const sx = -0.36 + ease * 0.72;
+          hand.position.set(sx, Math.sin(t * Math.PI) * 0.11, -0.04);
+          hand.rotation.set(-0.05, 0.12, -0.22 + ease * 0.44);
+          swipeTrailMat.opacity = Math.sin(t * Math.PI) * 0.84;
+          spotMesh.position.set(sx * 0.8, Math.sin(t * Math.PI) * 0.08, -0.46);
           gestureTft = { mode: t > 0.55 ? 'clinical' : 'food', cursorX: 0.15 + ease * 0.70, cursorY: 0.52, dwell: 0, flash: 0 };
         } else if (sp < 0.78) {
-          // Display Clinical screen briefly
-          hand.position.set(0.30, 0.02, 0.04);
-          hand.rotation.set(0, 0.12, 0.18);
-          otherFingers.rotation.x = -0.35;
+          hand.position.set(0.32, 0.02, 0.04);
+          hand.rotation.set(0, 0.10, 0.12);
           swipeTrailMat.opacity = 0.12;
           gestureTft = { mode: 'clinical', cursorX: 0.78, cursorY: 0.52, dwell: 0, flash: 0 };
         } else {
-          // Swipe back to Bilancia
           const t = (sp - 0.78) / 0.22;
-          const sx = 0.30 - t * 0.52;
+          const sx = 0.32 - t * 0.54;
           hand.position.set(sx, Math.sin(t * Math.PI) * 0.08, 0);
-          hand.rotation.set(0, -0.1, 0.2 - t * 0.4);
+          hand.rotation.set(0, -0.08, 0.12 - t * 0.28);
           swipeTrailMat.opacity = Math.sin(t * Math.PI) * 0.6;
           gestureTft = { mode: t > 0.5 ? 'food' : 'clinical', cursorX: 0.78 - t * 0.52, cursorY: 0.50, dwell: 0, flash: 0 };
         }
@@ -1928,14 +2125,17 @@ function applyRigState(elapsed) {
     if (sim && sim.overrideActive) {
       liveDisplays.renderTFT(sim);
       liveDisplays.renderSevenSeg(sim.weightG, sim.kittPos);
+    } else if (introTft) {
+      liveDisplays.renderTFT(introTft);
+      liveDisplays.renderSevenSeg(introSegWeight ?? 0, introKittPos);
     } else if (gestureTft) {
       liveDisplays.renderTFT({ ...gestureTft, weightG: 342.5 });
       liveDisplays.renderSevenSeg(342.5 + Math.sin(elapsed * 2.2) * 0.05);
     } else {
-      const wLive = 342.5 + Math.sin(elapsed * 1.4) * 0.1;
-      const dLive = 0.45 + 0.45 * (0.5 + 0.5 * Math.sin(elapsed * 1.6));
-      liveDisplays.renderTFT({ mode: 'food', weightG: wLive, cursorX: 0.76, cursorY: 0.79, dwell: dLive, flash: 0 });
-      liveDisplays.renderSevenSeg(wLive);
+      const wIdle = state.scrollProgress < 0.05 ? 0.0 : 342.5 + Math.sin(elapsed * 1.4) * 0.1;
+      const dLive = state.scrollProgress < 0.05 ? 0 : 0.45 + 0.45 * (0.5 + 0.5 * Math.sin(elapsed * 1.6));
+      liveDisplays.renderTFT({ mode: 'food', weightG: wIdle, cursorX: 0.76, cursorY: 0.79, dwell: dLive, flash: 0 });
+      liveDisplays.renderSevenSeg(wIdle);
     }
   }
 

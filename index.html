@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
-  <link rel="stylesheet" href="css/style.css?v=10" />
+  <link rel="stylesheet" href="css/style.css?v=11" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -33,22 +33,23 @@
         <span class="brand-tag">NISC 2026</span>
       </a>
       <nav class="nav-links" aria-label="Sezioni">
-        <a href="#chapter-xray">Raggi X</a>
-        <a href="#chapter-scheda-a">Componenti 3D</a>
-        <a href="#chapter-full-explode">Esploso Totale</a>
-        <a href="#inspector-anchor">Inspector</a>
-        <a href="#demo-live">Demo</a>
-        <a href="#architettura">Architettura</a>
-        <a href="#roadmap">Roadmap</a>
-        <a href="#team">Team 6</a>
+        <a href="#chapter-xray" data-i18n="nav_xray">Raggi X</a>
+        <a href="#chapter-full-explode" data-i18n="nav_explode">Esploso 3D</a>
+        <a href="#inspector-anchor" data-i18n="nav_inspector">360°</a>
+        <a href="#demo-live" data-i18n="nav_demo">Demo</a>
+        <a href="#simulatore" data-i18n="nav_sim">Simulatore</a>
+        <a href="#architettura" data-i18n="nav_arch">Architettura</a>
+        <a href="#bom" data-i18n="nav_bom">BOM</a>
+        <a href="#team" data-i18n="nav_team">Team 6</a>
       </nav>
       <div class="topbar-actions">
+        <button type="button" class="lang-toggle" id="btn-lang" aria-label="Cambia lingua IT / EN" title="Italiano / English">🇮🇹 IT</button>
         <a href="https://github.com/EmanuelChirico/Pondulo" class="back-portfolio topbar-gh" target="_blank" rel="noopener noreferrer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.05 11.05 0 0 1 5.8 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.27 5.68.42.36.79 1.07.79 2.15 0 1.55-.01 2.8-.01 3.18 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
-          Codice <span>↗</span>
+          <span data-i18n="nav_code">Codice</span> <span>↗</span>
         </a>
         <a href="https://www.pepite.info/blog/neapolis-innovation-summer-campus-2026-i-vincitori/#:~:text=Team%206%3A%20%E2%80%9CPONDULO%E2%80%9D" class="back-portfolio" target="_blank" rel="noopener noreferrer">
-          🏆 1° Premio · Pepite <span>↗</span>
+          🏆 <span data-i18n="nav_prize">1° Premio · Pepite</span> <span>↗</span>
         </a>
       </div>
     </div>
@@ -99,28 +100,30 @@
         <p class="drawer-subtitle" id="drawer-subtitle">X-NUCLEO-53L7A1 · 940 nm VCSEL</p>
         <p class="drawer-desc" id="drawer-desc"></p>
         <div class="drawer-specs" id="drawer-specs"></div>
+        <button type="button" class="drawer-isolate-btn" id="drawer-isolate-btn">◎ Isola componente</button>
       </aside>
 
       <!-- Interactive Inspector Dock (visible in Chapter 12) -->
       <div class="inspector-dock" id="inspector-dock">
         <div class="dock-group">
           <label for="ctrl-explode">
-            <span>Esploso</span>
+            <span data-i18n="dock_explode">Esploso</span>
             <strong id="val-explode">0%</strong>
           </label>
           <input type="range" id="ctrl-explode" min="0" max="100" value="0" />
         </div>
         <div class="dock-group">
           <label for="ctrl-tilt">
-            <span>Testa</span>
+            <span data-i18n="dock_tilt">Testa</span>
             <strong id="val-tilt">0°</strong>
           </label>
           <input type="range" id="ctrl-tilt" min="-24" max="24" value="0" />
         </div>
         <div class="dock-actions">
-          <button class="dock-btn" id="btn-xray" type="button">Raggi X</button>
-          <button class="dock-btn" id="btn-beam" type="button">Fascio ToF</button>
-          <button class="dock-btn active" id="btn-pins" type="button">Etichette</button>
+          <button class="dock-btn" id="btn-xray" type="button" data-i18n="dock_xray">Raggi X</button>
+          <button class="dock-btn" id="btn-beam" type="button" data-i18n="dock_beam">Fascio ToF</button>
+          <button class="dock-btn" id="btn-dataflow" type="button" data-i18n="dock_flow">⚡ Flusso Dati</button>
+          <button class="dock-btn active" id="btn-pins" type="button" data-i18n="dock_pins">Etichette</button>
           <button class="dock-btn" id="btn-reset-cam" type="button" title="Ricentra telecamera (R)">↺ Reset</button>
           <button class="dock-btn dock-btn-primary dock-btn-pulse" id="btn-orbit" type="button">🧭 Esplora 360°</button>
         </div>
@@ -457,6 +460,90 @@
             </figure>
           </div>
         </div>
+
+        <!-- Feature 4: Interactive Before/After CAD Blueprint vs Real Prototype Slider -->
+        <div class="compare-card">
+          <div class="compare-head">
+            <div>
+              <span class="compare-kicker" data-i18n="cmp_kicker">CONFRONTO 1:1 · CAD VS PROTOTIPO REALE</span>
+              <h3 data-i18n="cmp_title">Trascina il cursore: Blueprint Fusion 360 vs Hardware Reale</h3>
+            </div>
+            <div class="compare-tabs">
+              <button type="button" class="compare-tab active" data-compare="head" data-i18n="cmp_tab_head">Interno Testa</button>
+              <button type="button" class="compare-tab" data-compare="base" data-i18n="cmp_tab_base">Interno Base</button>
+            </div>
+          </div>
+          <div class="compare-stage" id="compare-stage">
+            <img src="assets/media/internal_head.webp" alt="Hardware reale interno PONDULO" id="compare-img-real" class="compare-img" loading="lazy" />
+            <div class="compare-overlay" id="compare-overlay">
+              <img src="assets/media/cad_head_compare.webp" alt="Blueprint CAD Fusion 360 interno PONDULO" id="compare-img-cad" class="compare-img" loading="lazy" />
+            </div>
+            <div class="compare-handle" id="compare-handle" aria-hidden="true"><span>⇄</span></div>
+            <span class="compare-pill compare-pill-left">CAD BLUEPRINT</span>
+            <span class="compare-pill compare-pill-right" data-i18n="cmp_pill_real">PROTOTIPO REALE</span>
+            <input type="range" id="compare-range" class="compare-range" min="4" max="96" value="50" aria-label="Confronta Blueprint CAD e foto reale" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature 1: INTERACTIVE LIVE PONDULO TOUCHLESS SIMULATOR -->
+    <section id="simulatore" class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-kicker" data-i18n="sim_kicker">PROVA DAL VIVO NEL BROWSER</span>
+          <h2 data-i18n="sim_title">Simulatore Touchless di PONDULO.</h2>
+          <p class="section-intro" data-i18n="sim_intro">
+            Muovi il mouse (o il dito) sulla griglia laser <strong>8×8 VL53L7CX</strong> a sinistra come se fosse la tua mano davanti al sensore:
+            sosta 1,5 secondi su un pulsante per confermarlo, fai uno swipe veloce per cambiare schermo e regola il peso per vedere aggiornarsi in tempo reale sia il TFT sia il display 7-segmenti.
+          </p>
+        </div>
+
+        <div class="sim-grid">
+          <!-- Left: 8x8 VL53L7CX ToF Pad -->
+          <div class="sim-panel">
+            <div class="sim-panel-head">
+              <span>VL53L7CX · 8×8 dToF PAD</span>
+              <code id="sim-tof-telemetry">$XY 160,120 · 15 Hz</code>
+            </div>
+            <div class="sim-tof-pad" id="sim-tof-pad" aria-label="Area sensore ToF 8x8 interattiva"></div>
+            <div class="sim-pad-controls">
+              <button type="button" class="sim-mini-btn" id="sim-swipe-left">← Swipe SX</button>
+              <button type="button" class="sim-mini-btn" id="sim-swipe-right">Swipe DX →</button>
+              <button type="button" class="sim-mini-btn" id="sim-btn-audio">🔇 Audio YX5300 OFF</button>
+            </div>
+          </div>
+
+          <!-- Center: 320x240 ILI9341 TFT Screen -->
+          <div class="sim-panel sim-panel-tft">
+            <div class="sim-panel-head">
+              <span>ILI9341 · 320×240 uGFX</span>
+              <span data-i18n="sim_dwell_hint">Sosta 1,5 s o clicca</span>
+            </div>
+            <div class="sim-tft-screen" id="sim-tft-screen"></div>
+            <div class="sim-toast" id="sim-toast" aria-live="polite"></div>
+          </div>
+
+          <!-- Right: 8-Digit Red 7-Segment + HX711 Load Cell Weight Simulator -->
+          <div class="sim-panel">
+            <div class="sim-panel-head">
+              <span>CL3641BH · HX711 24-BIT</span>
+              <strong id="sim-weight-val">342.5 g</strong>
+            </div>
+            <div class="sim-seven-seg" id="sim-seven-seg" aria-label="Display 7 segmenti rosso live"></div>
+            <div class="sim-weight-box">
+              <label for="sim-weight-slider" data-i18n="sim_weight_lbl">Simula peso sul piatto (0 – 1000 g)</label>
+              <input type="range" id="sim-weight-slider" min="0" max="1000" step="0.5" value="342.5" />
+              <div class="sim-presets">
+                <button type="button" class="sim-mini-btn" data-sim-weight="150">150 g</button>
+                <button type="button" class="sim-mini-btn" data-sim-weight="342.5">342.5 g</button>
+                <button type="button" class="sim-mini-btn" data-sim-weight="680">680 g</button>
+                <button type="button" class="sim-mini-btn" id="sim-btn-tare" data-i18n="sim_tare">Tara (0 g)</button>
+                <button type="button" class="sim-mini-btn sim-btn-kitt" id="sim-btn-kitt">⚡ K.I.T.T.</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -589,6 +676,50 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.05 11.05 0 0 1 5.8 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.27 5.68.42.36.79 1.07.79 2.15 0 1.55-.01 2.8-.01 3.18 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
             Codice su GitHub <span>↗</span>
           </a>
+        </div>
+
+        <!-- Feature 6: Interactive Filterable BOM Table + Technical Download Pack -->
+        <div class="bom-section" id="bom">
+          <div class="bom-head">
+            <div>
+              <span class="section-kicker" data-i18n="bom_kicker">DISTINTA BASE VERIFICATA · HARDWARE &amp; FIRMWARE</span>
+              <h3 data-i18n="bom_title">Scheda BOM Completa &amp; Datasheet Ufficiali</h3>
+            </div>
+            <div class="bom-summary">
+              <span id="bom-count-est">13 pz</span>
+              <strong id="bom-total-est">~€157</strong>
+            </div>
+          </div>
+          <div class="bom-filters" role="tablist">
+            <button type="button" class="bom-filter active" data-cat="all" data-i18n="bom_f_all">Tutti</button>
+            <button type="button" class="bom-filter" data-cat="mcu" data-i18n="bom_f_mcu">MCU &amp; Shield ST</button>
+            <button type="button" class="bom-filter" data-cat="sensor" data-i18n="bom_f_sensor">Sensori &amp; Metrologia</button>
+            <button type="button" class="bom-filter" data-cat="audio" data-i18n="bom_f_audio">Audio &amp; IoT</button>
+            <button type="button" class="bom-filter" data-cat="power" data-i18n="bom_f_power">Potenza &amp; Meccanica</button>
+          </div>
+          <div class="bom-table-wrap">
+            <table class="bom-table">
+              <thead>
+                <tr>
+                  <th data-i18n="bom_th_comp">Componente</th>
+                  <th class="bom-num" data-i18n="bom_th_qty">Q.tà</th>
+                  <th data-i18n="bom_th_role">Ruolo nel sistema</th>
+                  <th data-i18n="bom_th_bus">Bus / Pinout</th>
+                  <th class="bom-num" data-i18n="bom_th_cost">Stima</th>
+                  <th data-i18n="bom_th_ds">Documentazione</th>
+                </tr>
+              </thead>
+              <tbody id="bom-tbody"></tbody>
+            </table>
+          </div>
+          <div class="bom-pack-bar">
+            <span data-i18n="bom_pack_lbl">Pack Tecnico Rapido:</span>
+            <div class="bom-pack-links">
+              <a href="assets/media/pondulo_schema_fritzing.png" download="PONDULO_Schema_Collegamenti_Fritzing.png" class="schematic-btn schematic-btn-dl">⬇ Schema Fritzing HD (PNG)</a>
+              <a href="https://github.com/EmanuelChirico/Pondulo/blob/main/docs/HARDWARE.md" target="_blank" rel="noopener noreferrer" class="schematic-btn">📄 Pinout HARDWARE.md ↗</a>
+              <a href="https://www.vincenzonet.it/pondulo-bilancia-touchless-nisc-2026/" target="_blank" rel="noopener noreferrer" class="schematic-btn">📝 Articolo Portfolio ↗</a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -918,6 +1049,8 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=7"></script>
+  <script type="module" src="js/app.js?v=8"></script>
+  <script type="module" src="js/features.js?v=1"></script>
+  <script type="module" src="js/i18n.js?v=1"></script>
 </body>
 </html>

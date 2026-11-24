@@ -393,7 +393,8 @@ const keyLight = new THREE.DirectionalLight(0xffffff, 2.4);
 keyLight.position.set(5.0, 8.0, 6.5);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(1024, 1024);
-keyLight.shadow.bias = -0.0005;
+keyLight.shadow.bias = -0.0001;
+keyLight.shadow.normalBias = 0.038;
 scene.add(keyLight);
 
 const fillLight = new THREE.DirectionalLight(0x9bd6ff, 1.05);
@@ -494,6 +495,368 @@ function createToFBeamGroup() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 3B. STYLIZED 3D CARTOON HAND FOR ToF GESTURE DEMO (INDEX CURSOR + AIR-SWIPE)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createCartoonHandGroup() {
+  const root = new THREE.Group();
+  // Floating in front of VL53L7CX sensor (headPivot local coords: sensor is at 0.54, 0.784, 0.716)
+  root.position.set(0.54, 0.76, 1.92);
+
+  const gloveMat = new THREE.MeshStandardMaterial({
+    color: 0xfff4ea,
+    roughness: 0.42,
+    metalness: 0.04,
+  });
+  const outlineMat = new THREE.MeshBasicMaterial({
+    color: 0x111520,
+    side: THREE.BackSide,
+  });
+  const cuffMat = new THREE.MeshStandardMaterial({
+    color: 0x0ea5e9,
+    roughness: 0.35,
+    metalness: 0.15,
+    emissive: 0x0369a1,
+    emissiveIntensity: 0.35,
+  });
+  const tipRingMat = new THREE.MeshBasicMaterial({
+    color: 0xfacc15,
+    transparent: true,
+    opacity: 0.85,
+  });
+
+  function addOutlined(parent, geo, mat, pos, rot, scale = 1.075) {
+    const m = new THREE.Mesh(geo, mat);
+    if (pos) m.position.set(...pos);
+    if (rot) m.rotation.set(...rot);
+    const out = new THREE.Mesh(geo, outlineMat);
+    out.scale.setScalar(scale);
+    m.add(out);
+    parent.add(m);
+    return m;
+  }
+
+  const hand = new THREE.Group();
+  root.add(hand);
+
+  // Palm (rounded cartoon cushion)
+  const palmGeo = new THREE.SphereGeometry(0.165, 22, 18);
+  palmGeo.scale(1.08, 1.15, 0.62);
+  addOutlined(hand, palmGeo, gloveMat, [0, -0.04, 0]);
+
+  // Wrist & cartoon cyan cuff
+  addOutlined(hand, new THREE.CylinderGeometry(0.115, 0.125, 0.14, 18), cuffMat, [0, -0.22, 0.03]);
+
+  // Pointing Index Finger (aimed forward -Z toward the VL53L7CX matrix!)
+  const indexGroup = new THREE.Group();
+  indexGroup.position.set(-0.075, 0.11, -0.02);
+  addOutlined(indexGroup, new THREE.CapsuleGeometry(0.044, 0.24, 10, 14), gloveMat, [0, 0.09, -0.14], [Math.PI * 0.36, 0, 0.08]);
+  // Glowing yellow cursor-tip halo at fingertip
+  const tipRing = new THREE.Mesh(new THREE.RingGeometry(0.042, 0.064, 24), tipRingMat);
+  tipRing.position.set(-0.02, 0.16, -0.29);
+  indexGroup.add(tipRing);
+  hand.add(indexGroup);
+
+  // Middle, Ring, Pinky fingers (curled in pointing mode, extend subtly during Air-Swipe!)
+  const otherFingers = new THREE.Group();
+  addOutlined(otherFingers, new THREE.CapsuleGeometry(0.041, 0.15, 8, 12), gloveMat, [ 0.015, 0.09, -0.05], [Math.PI * 0.62, 0, 0]);
+  addOutlined(otherFingers, new THREE.CapsuleGeometry(0.038, 0.13, 8, 12), gloveMat, [ 0.092, 0.07, -0.03], [Math.PI * 0.66, 0, -0.08]);
+  addOutlined(otherFingers, new THREE.CapsuleGeometry(0.034, 0.10, 8, 12), gloveMat, [ 0.155, 0.03,  0.00], [Math.PI * 0.68, 0, -0.16]);
+  hand.add(otherFingers);
+
+  // Cartoon Thumb
+  addOutlined(hand, new THREE.CapsuleGeometry(0.042, 0.14, 8, 12), gloveMat, [-0.155, 0.01, -0.02], [Math.PI * 0.28, 0.2, 0.55]);
+
+  // Glowing Cyan Air-Swipe Arc Trail (lights up during Phase B Swipe!)
+  const arcPts = [];
+  for (let i = 0; i <= 24; i++) {
+    const t = i / 24;
+    const x = -0.34 + t * 0.68;
+    const y = Math.sin(t * Math.PI) * 0.11;
+    arcPts.push(new THREE.Vector3(x, y, -0.24));
+  }
+  const swipeTrailGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arcPts), 24, 0.014, 8, false);
+  const swipeTrailMat = new THREE.MeshBasicMaterial({
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const swipeTrail = new THREE.Mesh(swipeTrailGeo, swipeTrailMat);
+  root.add(swipeTrail);
+
+  // Active ToF laser target spot projected right onto the 8x8 cone plane
+  const spotMat = new THREE.MeshBasicMaterial({
+    color: 0xfacc15,
+    transparent: true,
+    opacity: 0.78,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const spotMesh = new THREE.Mesh(new THREE.RingGeometry(0.045, 0.085, 24), spotMat);
+  spotMesh.position.set(0, 0, -0.45);
+  root.add(spotMesh);
+
+  root.visible = false;
+  root.userData = { hand, otherFingers, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat };
+  return root;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3C. LIVE ANIMATED 3D DISPLAYS (ILI9341 TFT + 8-DIGIT 7-SEG CANVASTEXTURE)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createLiveDisplays3D() {
+  const tftCanvas = document.createElement('canvas');
+  tftCanvas.width = 640;
+  tftCanvas.height = 480;
+  const tftCtx = tftCanvas.getContext('2d');
+  const tftTex = new THREE.CanvasTexture(tftCanvas);
+  tftTex.colorSpace = THREE.SRGBColorSpace;
+  tftTex.flipY = false;
+
+  const segCanvas = document.createElement('canvas');
+  segCanvas.width = 640;
+  segCanvas.height = 160;
+  const segCtx = segCanvas.getContext('2d');
+  const segTex = new THREE.CanvasTexture(segCanvas);
+  segTex.colorSpace = THREE.SRGBColorSpace;
+  segTex.flipY = false;
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+  }
+
+  function renderTFT({ mode = 'food', product = 'Manzo', price = 18.9, weightG = 342.5, cursorX = 0.78, cursorY = 0.78, dwell = 0.65, flash = 0 }) {
+    const ctx = tftCtx;
+    const W = 640, H = 480;
+    ctx.fillStyle = '#06090e';
+    ctx.fillRect(0, 0, W, H);
+
+    // Header
+    ctx.fillStyle = mode === 'clinical' ? '#0b253a' : '#0f172a';
+    ctx.fillRect(0, 0, W, 74);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 74, W, 3);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 32px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(mode === 'clinical' ? 'CLINICO · PAZIENTE #01' : `BILANCIA - ${product}`, W / 2, 37);
+
+    if (mode === 'clinical') {
+      const cards = [
+        ['FC', '72 bpm', '#38bdf8', 44, 112],
+        ['PA', '120/80', '#4ade80', 334, 112],
+        ['SpO2', '98%', '#facc15', 44, 240],
+        ['TEMP', '36.7°C', '#fb7185', 334, 240],
+      ];
+      cards.forEach(([lbl, val, col, x, y]) => {
+        roundRect(ctx, x, y, 262, 108, 14);
+        ctx.fillStyle = '#111c30';
+        ctx.fill();
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '600 20px monospace';
+        ctx.fillText(lbl, x + 131, y + 32);
+        ctx.fillStyle = col;
+        ctx.font = '700 40px Inter, sans-serif';
+        ctx.fillText(val, x + 131, y + 74);
+      });
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '600 20px monospace';
+      ctx.fillText('← AIR-SWIPE PER TORNARE ALLA BILANCIA →', W / 2, 412);
+    } else {
+      const total = (weightG / 1000) * price;
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '500 22px Inter, sans-serif';
+      ctx.fillText(`Prezzo: ${price.toFixed(2)} EUR/kg   |   Peso: ${weightG.toFixed(1)} g`, W / 2, 116);
+
+      roundRect(ctx, 42, 150, W - 84, 116, 16);
+      ctx.fillStyle = '#141e30';
+      ctx.fill();
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#facc15';
+      ctx.font = '700 46px Inter, sans-serif';
+      ctx.fillText(`Totale: ${total.toFixed(2)} EUR`, W / 2, 204);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '400 17px Inter, sans-serif';
+      ctx.fillText('Moltiplicatore: x1  •  Dwell 1,5 s per confermare', W / 2, 245);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '500 18px monospace';
+      ctx.fillText('Sensore ToF 8x8 attivo  •  Zero Contatto', W / 2, 302);
+
+      // + CARRELLO button
+      roundRect(ctx, 38, 340, 264, 96, 12);
+      ctx.fillStyle = '#0284c7';
+      ctx.fill();
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 26px Inter, sans-serif';
+      ctx.fillText('+ CARRELLO', 170, 388);
+
+      // STAMPA button (with live yellow Dwell progress bar + green flash!)
+      roundRect(ctx, 338, 340, 264, 96, 12);
+      ctx.fillStyle = flash > 0.1 ? '#22c55e' : '#16a34a';
+      ctx.fill();
+      ctx.strokeStyle = dwell > 0.05 ? '#facc15' : '#475569';
+      ctx.lineWidth = dwell > 0.05 ? 5 : 3;
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 26px Inter, sans-serif';
+      ctx.fillText(flash > 0.2 ? 'OK! STAMPATO' : 'STAMPA', 470, 382);
+
+      if (dwell > 0.02) {
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(354, 418, Math.max(4, 232 * Math.min(1, dwell)), 10);
+      }
+    }
+
+    // Live yellow Air-Cursor dot
+    const cx = Math.max(24, Math.min(W - 24, cursorX * W));
+    const cy = Math.max(92, Math.min(H - 24, cursorY * H));
+    ctx.beginPath();
+    ctx.arc(cx, cy, 13, 0, Math.PI * 2);
+    ctx.fillStyle = '#facc15';
+    ctx.fill();
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    tftTex.needsUpdate = true;
+  }
+
+  const SEG_MAP = {
+    '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc',
+    '5': 'afgcd', '6': 'afgecd', '7': 'abc', '8': 'abcdefg', '9': 'abfgcd', '-': 'g', ' ': '',
+  };
+
+  function renderSevenSeg(weightG = 342.5, kittPos = -1) {
+    const ctx = segCtx;
+    const W = 640, H = 160;
+    ctx.fillStyle = '#0e0e10';
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#232328';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2, 2, W - 4, H - 4);
+    ctx.fillStyle = '#08080a';
+    ctx.fillRect(W / 2 - 3, 0, 6, H);
+
+    let str, dpIdx;
+    if (kittPos >= 0) {
+      str = '        ';
+      dpIdx = -1;
+    } else {
+      const centi = Math.max(0, Math.min(9999999, Math.round(weightG * 100)));
+      str = String(centi).padStart(8, ' ');
+      if (centi < 100) str = String(centi).padStart(3, '0').padStart(8, ' ');
+      dpIdx = 5;
+    }
+
+    const slotW = (W - 36) / 8;
+    for (let i = 0; i < 8; i++) {
+      const x0 = 18 + i * slotW + 6;
+      const y0 = 26, w = slotW - 22, h = H - 52, t = 8;
+      const ch = kittPos >= 0 ? (i === kittPos ? '-' : ' ') : str[i];
+      const on = SEG_MAP[ch] || '';
+      const segs = {
+        a: [[x0 + t, y0], [x0 + w - t, y0], [x0 + w - t - 4, y0 + t], [x0 + t + 4, y0 + t]],
+        b: [[x0 + w - t, y0 + 2], [x0 + w, y0 + t], [x0 + w - 2, y0 + h / 2 - 3], [x0 + w - t - 2, y0 + h / 2 - 7]],
+        c: [[x0 + w - t - 2, y0 + h / 2 + 7], [x0 + w - 2, y0 + h / 2 + 3], [x0 + w - 4, y0 + h - t], [x0 + w - t - 4, y0 + h - 2]],
+        d: [[x0 + t + 2, y0 + h - t], [x0 + w - t - 2, y0 + h - t], [x0 + w - t + 2, y0 + h], [x0 + t - 2, y0 + h]],
+        e: [[x0 + 2, y0 + h / 2 + 3], [x0 + t + 2, y0 + h / 2 + 7], [x0 + t, y0 + h - 2], [x0, y0 + h - t]],
+        f: [[x0 + 4, y0 + t], [x0 + t + 4, y0 + 2], [x0 + t + 2, y0 + h / 2 - 7], [x0 + 2, y0 + h / 2 - 3]],
+        g: [[x0 + t + 2, y0 + h / 2 - 4], [x0 + w - t - 2, y0 + h / 2 - 4], [x0 + w - 4, y0 + h / 2],
+            [x0 + w - t - 2, y0 + h / 2 + 4], [x0 + t + 2, y0 + h / 2 + 4], [x0 + 4, y0 + h / 2]],
+      };
+      for (const [k, pts] of Object.entries(segs)) {
+        const lit = on.includes(k);
+        ctx.beginPath();
+        pts.forEach(([px, py], pi) => (pi === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)));
+        ctx.closePath();
+        ctx.fillStyle = lit ? '#ff2a20' : '#2e1414';
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(x0 + w + 8, y0 + h - 6, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = i === dpIdx ? '#ff2a20' : '#2e1414';
+      ctx.fill();
+    }
+    segTex.needsUpdate = true;
+  }
+
+  renderTFT({});
+  renderSevenSeg(342.5);
+  return { tftTex, segTex, renderTFT, renderSevenSeg };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3D. ANIMATED 3D DATA-FLOW SIGNAL PULSES BETWEEN BOARDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createDataFlowGroup() {
+  const group = new THREE.Group();
+  // Paths in headPivot local Three.js coords (derived from exact board coordinates!)
+  const specs = [
+    // USART3 921.6kbaud: Scheda A (ToF) -> Scheda B (Display)
+    { color: 0x38bdf8, speed: 0.72, pts: [[0.42, 0.61, 0.30], [0.22, 0.63, 0.18], [0.04, 0.59, 0.20], [-0.10, 0.57, 0.34]] },
+    // DAC -> ADC PA4 analog weight: Scheda C (Top Scale) -> Scheda B (Display)
+    { color: 0xfacc15, speed: 0.55, pts: [[0.12, 0.89, 0.10], [0.08, 0.75, 0.22], [-0.06, 0.65, 0.26], [-0.16, 0.59, 0.34]] },
+    // UART5 9600 Audio: Scheda B -> MP3 YX5300
+    { color: 0xc084fc, speed: 0.62, pts: [[-0.48, 0.61, 0.34], [-0.64, 0.65, 0.18], [-0.84, 0.64, 0.15]] },
+    // AUX Audio: MP3 YX5300 -> Hinge column toward Base Amp
+    { color: 0xf472b6, speed: 0.58, pts: [[-0.75, 0.89, 0.19], [-0.62, 0.85, 0.12], [-0.32, 0.43, 0.10], [-0.08, -0.01, 0.02]] },
+    // UART1 38400 Prices: ESP8266 -> Scheda B
+    { color: 0x4ade80, speed: 0.52, pts: [[-0.70, -0.07, -0.05], [-0.45, 0.15, 0.08], [-0.25, 0.48, 0.30]] },
+    // Power 5V Rail: Buck LM2596 -> Scheda A & B
+    { color: 0xf87171, speed: 0.46, pts: [[0.46, -0.07, 0.04], [0.26, 0.24, 0.14], [0.35, 0.45, 0.32]] },
+    { color: 0xf87171, speed: 0.46, pts: [[0.46, -0.07, 0.04], [0.12, 0.28, 0.08], [-0.25, 0.45, 0.34]] },
+  ];
+
+  const packets = [];
+  const sphereGeo = new THREE.SphereGeometry(0.026, 12, 12);
+  specs.forEach((s) => {
+    const curve = new THREE.CatmullRomCurve3(s.pts.map((p) => new THREE.Vector3(...p)));
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(24));
+    const lineMat = new THREE.LineBasicMaterial({
+      color: s.color,
+      transparent: true,
+      opacity: 0.34,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    group.add(new THREE.Line(lineGeo, lineMat));
+    for (let k = 0; k < 2; k++) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: s.color,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const mesh = new THREE.Mesh(sphereGeo, mat);
+      group.add(mesh);
+      packets.push({ mesh, curve, speed: s.speed, phase: k * 0.5 });
+    }
+  });
+
+  group.visible = false;
+  group.userData = { packets };
+  return group;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 4. ANIMATION RIG STATE (PER-SUBSYSTEM EXTRACTION + AUTO X-RAY!)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -519,22 +882,31 @@ const state = {
   manualXray: false,
   freeOrbit: false,
   forceBeam: false,
+  forceDataFlow: false,
+  isolatedId: null,
   showPinsToggle: true,
   activeChapter: 0,
+  scrollProgress: 0,
 };
 
 let ponduloRoot = null;
 let headPivot = null;
 let tofBeam = null;
+let cartoonHand = null;
+let dataFlowGroup = null;
+let liveDisplays = null;
 const partMap = new Map();
 const origPos = new Map();
 const headShellMeshes = [];
 const baseShellMeshes = [];
+const cadInkEdges = [];       // Crisp thin black CAD outlines shown after Chapter 01 hero!
+const ledGreenMaterials = []; // 1 Hz blinking STM32 LD2 heartbeat LEDs!
 const badgeMaterials = [];
 const wireMaterials = [];
 const headXrayEdges = [];
 const baseXrayEdges = [];
 const pinElements = new Map();
+const isolateTrackedMeshes = [];
 
 function attachXrayContour(mesh, targetList) {
   const edgesGeo = new THREE.EdgesGeometry(mesh.geometry, 26);
@@ -551,12 +923,42 @@ function attachXrayContour(mesh, targetList) {
   targetList.push({ lines, mat: edgeMat });
 }
 
+function attachCadInkOutline(mesh, thresholdDeg = 28) {
+  const edgesGeo = new THREE.EdgesGeometry(mesh.geometry, thresholdDeg);
+  const edgeMat = new THREE.LineBasicMaterial({
+    color: 0x0b0e14,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+  });
+  const lines = new THREE.LineSegments(edgesGeo, edgeMat);
+  lines.visible = false;
+  lines.renderOrder = 6;
+  mesh.add(lines);
+  cadInkEdges.push({ lines, mat: edgeMat, isHead: mesh.parent?.name === 'head_shell' || mesh.name === 'head_shell' || mesh.parent?.name === 'hinge_clamps' || mesh.name === 'hinge_clamps' });
+}
+
+// Bridge for interactive browser UI Simulator to drive the 3D displays in real time!
+window.ponduloLiveSim = {
+  overrideActive: false,
+  mode: 'food',
+  product: 'Manzo',
+  price: 18.9,
+  weightG: 342.5,
+  cursorX: 0.78,
+  cursorY: 0.78,
+  dwell: 0.65,
+  flash: 0,
+  kittPos: -1,
+};
+
 const loader = new GLTFLoader();
 loader.load(
-  'assets/pondulo.glb?v=4',
+  'assets/pondulo.glb?v=5',
   (gltf) => {
     ponduloRoot = gltf.scene;
     scene.add(ponduloRoot);
+    liveDisplays = createLiveDisplays3D();
 
     ponduloRoot.traverse((obj) => {
       if (obj.name) {
@@ -568,6 +970,23 @@ loader.load(
         obj.receiveShadow = true;
         const ownerName = obj.name || obj.parent?.name || '';
         const parentName = obj.parent?.name || '';
+        const groupId = HOTSPOTS.some((h) => h.id === ownerName) ? ownerName : (HOTSPOTS.some((h) => h.id === parentName) ? parentName : '');
+
+        // Live animated 3D CanvasTexture screens (TFT ILI9341 + 8-Digit Red 7-Segment!)
+        if (obj.material?.name === 'tft_screen' && liveDisplays) {
+          obj.material = obj.material.clone();
+          obj.material.map = liveDisplays.tftTex;
+          obj.material.emissiveMap = liveDisplays.tftTex;
+          obj.material.needsUpdate = true;
+        } else if (obj.material?.name === 'seven_seg' && liveDisplays) {
+          obj.material = obj.material.clone();
+          obj.material.map = liveDisplays.segTex;
+          obj.material.emissiveMap = liveDisplays.segTex;
+          obj.material.needsUpdate = true;
+        } else if (obj.material?.name === 'led_green') {
+          obj.material = obj.material.clone();
+          ledGreenMaterials.push(obj.material);
+        }
 
         // Clone PLA shell materials independently so Head X-Ray and Base X-Ray NEVER interfere!
         if (ownerName === 'head_shell' || parentName === 'head_shell' || ownerName === 'hinge_clamps' || parentName === 'hinge_clamps') {
@@ -575,6 +994,7 @@ loader.load(
             obj.material = obj.material.clone();
             obj.material.side = THREE.FrontSide;
             headShellMeshes.push(obj);
+            attachCadInkOutline(obj, 28);
             if (ownerName === 'head_shell' || parentName === 'head_shell') {
               attachXrayContour(obj, headXrayEdges);
             }
@@ -584,11 +1004,21 @@ loader.load(
             obj.material = obj.material.clone();
             obj.material.side = THREE.FrontSide;
             baseShellMeshes.push(obj);
+            attachCadInkOutline(obj, 28);
             attachXrayContour(obj, baseXrayEdges);
+          }
+        } else if (ownerName === 'weighing_plate' || parentName === 'weighing_plate') {
+          if (obj.material?.name === 'pla_white') {
+            attachCadInkOutline(obj, 30);
           }
         } else if (ownerName === 'nisc_badge' || parentName === 'nisc_badge') {
           obj.material = obj.material.clone();
           badgeMaterials.push(obj.material);
+        }
+
+        if (groupId && obj.material && !Array.isArray(obj.material)) {
+          obj.material = obj.material.clone();
+          isolateTrackedMeshes.push({ mesh: obj, groupId, origOpacity: obj.material.opacity ?? 1, origTrans: !!obj.material.transparent });
         }
 
         // Wiring materials fade gently during wide exploded views
@@ -605,6 +1035,10 @@ loader.load(
     if (headPivot) {
       tofBeam = createToFBeamGroup();
       headPivot.add(tofBeam);
+      cartoonHand = createCartoonHandGroup();
+      headPivot.add(cartoonHand);
+      dataFlowGroup = createDataFlowGroup();
+      headPivot.add(dataFlowGroup);
     }
 
     buildHotspotDOM();
@@ -655,19 +1089,30 @@ function buildHotspotDOM() {
 function openDrawer(h) {
   activeHotspotId = h.id;
   pinElements.forEach((el, id) => el.classList.toggle('active', id === h.id));
-  drawerBadge.textContent = h.badge;
-  drawerTitle.textContent = h.title;
-  drawerSubtitle.textContent = h.subtitle;
-  drawerDesc.textContent = h.desc;
-  drawerSpecs.innerHTML = h.specs
+  const tr = (window.ponduloLang === 'en' && window.PONDULO_HOTSPOTS_EN?.[h.id]) || h;
+  drawerBadge.textContent = tr.badge || h.badge;
+  drawerTitle.textContent = tr.title || h.title;
+  drawerSubtitle.textContent = tr.subtitle || h.subtitle;
+  drawerDesc.textContent = tr.desc || h.desc;
+  const specs = tr.specs || h.specs;
+  drawerSpecs.innerHTML = specs
     .map(([k, v]) => `<div class="drawer-spec-row"><span>${k}</span><strong>${v}</strong></div>`)
     .join('');
+  const btnIso = document.getElementById('drawer-isolate-btn');
+  if (btnIso) {
+    const isIso = state.isolatedId === h.id;
+    btnIso.classList.toggle('active', isIso);
+    btnIso.textContent = isIso
+      ? (window.ponduloLang === 'en' ? '✕ Show all parts' : '✕ Mostra tutto')
+      : (window.ponduloLang === 'en' ? '◎ Isolate component' : '◎ Isola componente');
+  }
   drawer.classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
 }
 
 function closeDrawer() {
   activeHotspotId = null;
+  state.isolatedId = null;
   pinElements.forEach((el) => el.classList.remove('active'));
   drawer.classList.remove('open');
   drawer.setAttribute('aria-hidden', 'true');
@@ -934,6 +1379,7 @@ function setupScrollChoreography() {
       end: 'bottom bottom',
       scrub: 0.75,
       onUpdate: (self) => {
+        state.scrollProgress = self.progress;
         progressBar.style.width = `${(self.progress * 100).toFixed(1)}%`;
 
         if (self.progress < 0.84 && state.manualOverride) {
@@ -1173,10 +1619,12 @@ function setupInspectorControls() {
   const valTilt = document.getElementById('val-tilt');
   const btnXray = document.getElementById('btn-xray');
   const btnBeam = document.getElementById('btn-beam');
+  const btnDataFlow = document.getElementById('btn-dataflow');
   const btnPins = document.getElementById('btn-pins');
   const btnResetCam = document.getElementById('btn-reset-cam');
   const btnOrbit = document.getElementById('btn-orbit');
   const btnLaunch3d = document.getElementById('btn-launch-3d');
+  const btnIsolate = document.getElementById('drawer-isolate-btn');
 
   ctrlExplode.addEventListener('input', () => {
     state.manualOverride = true;
@@ -1207,6 +1655,21 @@ function setupInspectorControls() {
     btnBeam.classList.toggle('active', state.forceBeam);
   });
 
+  btnDataFlow?.addEventListener('click', () => {
+    state.forceDataFlow = !state.forceDataFlow;
+    btnDataFlow.classList.toggle('active', state.forceDataFlow);
+  });
+
+  btnIsolate?.addEventListener('click', () => {
+    if (!activeHotspotId) return;
+    state.isolatedId = state.isolatedId === activeHotspotId ? null : activeHotspotId;
+    btnIsolate.classList.toggle('active', state.isolatedId === activeHotspotId);
+    const isEn = window.ponduloLang === 'en';
+    btnIsolate.textContent = state.isolatedId === activeHotspotId
+      ? (isEn ? '✕ Show all parts' : '✕ Mostra tutto')
+      : (isEn ? '◎ Isolate component' : '◎ Isola componente');
+  });
+
   btnPins.addEventListener('click', () => {
     state.showPinsToggle = !state.showPinsToggle;
     btnPins.classList.toggle('active', state.showPinsToggle);
@@ -1215,6 +1678,8 @@ function setupInspectorControls() {
 
   btnResetCam?.addEventListener('click', () => {
     state.manualOverride = true;
+    state.isolatedId = null;
+    if (btnIsolate) { btnIsolate.classList.remove('active'); btnIsolate.textContent = window.ponduloLang === 'en' ? '◎ Isolate component' : '◎ Isola componente'; }
     if (!state.freeOrbit) setFreeOrbit(true);
     resetInspectorCamera();
   });
@@ -1326,6 +1791,33 @@ function applyRigState(elapsed) {
   applyShellXray(headShellMeshes, headXrayEdges, headXray);
   applyShellXray(baseShellMeshes, baseXrayEdges, baseXray);
 
+  // Crisp thin black CAD edge outlines appear smoothly AFTER leaving the Chapter 01 Hero!
+  const pastHero = THREE.MathUtils.clamp((state.scrollProgress - 0.035) / 0.045, 0, 1);
+  cadInkEdges.forEach(({ lines, mat, isHead }) => {
+    const shellXray = isHead ? headXray : baseXray;
+    const inkOpacity = pastHero * (1.0 - shellXray * 0.85) * 0.48;
+    lines.visible = inkOpacity > 0.02;
+    mat.opacity = inkOpacity;
+  });
+
+  // Component Isolate mode: dim non-isolated boards cleanly so the chosen board pops!
+  isolateTrackedMeshes.forEach(({ mesh, groupId, origOpacity, origTrans }) => {
+    const dim = state.isolatedId && state.isolatedId !== groupId;
+    const targetTrans = dim ? true : origTrans;
+    if (mesh.material.transparent !== targetTrans) {
+      mesh.material.transparent = targetTrans;
+      mesh.material.needsUpdate = true;
+    }
+    mesh.material.opacity = dim ? 0.14 : origOpacity;
+    mesh.material.depthWrite = !dim;
+  });
+
+  // 1 Hz STM32 NUCLEO-G474RE LD2 green heartbeat LED blink!
+  const hb = (Math.sin(elapsed * Math.PI * 2.0) > 0.15) ? 1.0 : 0.12;
+  ledGreenMaterials.forEach((m) => {
+    m.emissiveIntensity = hb;
+  });
+
   badgeMaterials.forEach((mat) => {
     // nisc_badge is already alphaMode BLEND (transparent: true)
     mat.opacity = 1.0 - headXray * 0.78;
@@ -1350,14 +1842,113 @@ function applyRigState(elapsed) {
   floorMat.opacity = 0.65 * (1.0 - state.exBase * 0.55);
   ringMat.opacity = 0.13 * (1.0 - state.exBase * 0.55);
 
-  // Volumetric 8x8 ToF Laser Beam
+  // Volumetric 8x8 ToF Laser Beam + Animated 3D Cartoon Hand + Live 3D TFT & 7-Seg Displays!
+  const bi = state.forceBeam ? 1.0 : state.beamIntensity;
   if (tofBeam) {
-    const bi = state.forceBeam ? 1.0 : state.beamIntensity;
     tofBeam.visible = bi > 0.02;
     if (tofBeam.visible) {
       const pulse = 0.85 + 0.15 * Math.sin(elapsed * 5.0);
       tofBeam.userData.coneMat.opacity = 0.11 * bi * pulse;
       tofBeam.userData.lineMat.opacity = 0.42 * bi * pulse;
+    }
+  }
+
+  let gestureTft = null;
+  if (cartoonHand) {
+    cartoonHand.visible = bi > 0.15;
+    if (cartoonHand.visible) {
+      const { hand, otherFingers, tipRingMat, swipeTrailMat, spotMesh, spotMat } = cartoonHand.userData;
+      const cyc = elapsed % 9.0;
+      if (cyc < 5.2) {
+        // Phase A: Index finger Air-Cursor glides to STAMPA -> 1.5s Dwell -> Green confirmation!
+        swipeTrailMat.opacity = 0;
+        otherFingers.rotation.x = 0;
+        if (cyc < 2.2) {
+          const p = cyc / 2.2;
+          const ease = 0.5 - 0.5 * Math.cos(p * Math.PI);
+          const hx = -0.22 + ease * 0.42;
+          const hy = 0.12 - ease * 0.24;
+          hand.position.set(hx, hy, 0);
+          hand.rotation.set(0.08, -hx * 0.45, -hx * 0.25);
+          spotMesh.position.set(hx * 0.85, hy * 0.85, -0.45);
+          tipRingMat.opacity = 0.7;
+          spotMat.opacity = 0.72;
+          gestureTft = { mode: 'food', cursorX: 0.26 + ease * 0.50, cursorY: 0.46 + ease * 0.34, dwell: 0, flash: 0 };
+        } else if (cyc < 4.2) {
+          // Hover steady over STAMPA: Dwell fills 0 -> 100%!
+          const dp = (cyc - 2.2) / 2.0;
+          hand.position.set(0.20, -0.12, -0.05 * Math.sin(dp * Math.PI));
+          hand.rotation.set(0.1, -0.1, -0.05);
+          spotMesh.position.set(0.17, -0.10, -0.45);
+          tipRingMat.opacity = 0.95;
+          spotMat.opacity = 0.9;
+          gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: dp, flash: 0 };
+        } else {
+          // Green confirmation flash!
+          hand.position.set(0.20, -0.12, 0.04);
+          gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: 1.0, flash: 1.0 };
+        }
+      } else {
+        // Phase B: Crisp Left->Right Air-Swipe switching Macelleria -> Clinico!
+        const sp = (cyc - 5.2) / 3.8;
+        if (sp < 0.38) {
+          const t = sp / 0.38;
+          const ease = 0.5 - 0.5 * Math.cos(t * Math.PI);
+          const sx = -0.34 + ease * 0.68;
+          hand.position.set(sx, Math.sin(t * Math.PI) * 0.10, -0.04);
+          hand.rotation.set(-0.08, 0.18, -0.35 + ease * 0.7);
+          otherFingers.rotation.x = -0.55; // Open hand swipe pose!
+          swipeTrailMat.opacity = Math.sin(t * Math.PI) * 0.82;
+          spotMesh.position.set(sx * 0.8, Math.sin(t * Math.PI) * 0.08, -0.45);
+          gestureTft = { mode: t > 0.55 ? 'clinical' : 'food', cursorX: 0.15 + ease * 0.70, cursorY: 0.52, dwell: 0, flash: 0 };
+        } else if (sp < 0.78) {
+          // Display Clinical screen briefly
+          hand.position.set(0.30, 0.02, 0.04);
+          hand.rotation.set(0, 0.12, 0.18);
+          otherFingers.rotation.x = -0.35;
+          swipeTrailMat.opacity = 0.12;
+          gestureTft = { mode: 'clinical', cursorX: 0.78, cursorY: 0.52, dwell: 0, flash: 0 };
+        } else {
+          // Swipe back to Bilancia
+          const t = (sp - 0.78) / 0.22;
+          const sx = 0.30 - t * 0.52;
+          hand.position.set(sx, Math.sin(t * Math.PI) * 0.08, 0);
+          hand.rotation.set(0, -0.1, 0.2 - t * 0.4);
+          swipeTrailMat.opacity = Math.sin(t * Math.PI) * 0.6;
+          gestureTft = { mode: t > 0.5 ? 'food' : 'clinical', cursorX: 0.78 - t * 0.52, cursorY: 0.50, dwell: 0, flash: 0 };
+        }
+      }
+    }
+  }
+
+  // Throttle live CanvasTexture redraws to ~18 Hz (zero GPU stutter!)
+  if (liveDisplays && elapsed - (liveDisplays._lastDraw || 0) > 0.055) {
+    liveDisplays._lastDraw = elapsed;
+    const sim = window.ponduloLiveSim;
+    if (sim && sim.overrideActive) {
+      liveDisplays.renderTFT(sim);
+      liveDisplays.renderSevenSeg(sim.weightG, sim.kittPos);
+    } else if (gestureTft) {
+      liveDisplays.renderTFT({ ...gestureTft, weightG: 342.5 });
+      liveDisplays.renderSevenSeg(342.5 + Math.sin(elapsed * 2.2) * 0.05);
+    } else {
+      const wLive = 342.5 + Math.sin(elapsed * 1.4) * 0.1;
+      const dLive = 0.45 + 0.45 * (0.5 + 0.5 * Math.sin(elapsed * 1.6));
+      liveDisplays.renderTFT({ mode: 'food', weightG: wLive, cursorX: 0.76, cursorY: 0.79, dwell: dLive, flash: 0 });
+      liveDisplays.renderSevenSeg(wLive);
+    }
+  }
+
+  // 3D Animated Data-Flow Signal Pulses (manual toggle OR subtle auto in Architecture chapters 05-09!)
+  if (dataFlowGroup) {
+    const autoFlow = !state.manualOverride && state.activeChapter >= 4 && state.activeChapter <= 8;
+    const showFlow = state.forceDataFlow || autoFlow;
+    dataFlowGroup.visible = showFlow;
+    if (showFlow) {
+      dataFlowGroup.userData.packets.forEach((p) => {
+        const t = (elapsed * p.speed + p.phase) % 1.0;
+        p.curve.getPointAt(t, p.mesh.position);
+      });
     }
   }
 

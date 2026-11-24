@@ -509,11 +509,11 @@ function createCartoonHandGroup() {
 
   // Load smooth organic SDF-sculpted chubby 3D cartoon gloved hand (pointing index toward -Z!)
   const handLoader = new GLTFLoader();
-  handLoader.load('assets/cartoon_hand.glb?v=2', (gltf) => {
+  handLoader.load('assets/cartoon_hand.glb?v=3', (gltf) => {
     const model = gltf.scene;
-    model.scale.setScalar(1.52);
-    // Natural ergonomic angle with thumb & index finger clearly turned toward the LEFT viewer camera!
-    model.rotation.set(0.14, -0.14, 0.08);
+    model.scale.setScalar(1.38);
+    // Natural Topolino pointing angle: slightly tilted so the 3 black dorsal stripes + thumb + index all read clearly from LEFT camera!
+    model.rotation.set(0.22, -0.12, 0.18);
     model.traverse((o) => {
       if (o.isMesh) {
         o.castShadow = true;

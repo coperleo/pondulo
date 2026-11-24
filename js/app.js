@@ -509,9 +509,11 @@ function createCartoonHandGroup() {
 
   // Load smooth organic SDF-sculpted chubby 3D cartoon gloved hand (pointing index toward -Z!)
   const handLoader = new GLTFLoader();
-  handLoader.load('assets/cartoon_hand.glb?v=1', (gltf) => {
+  handLoader.load('assets/cartoon_hand.glb?v=2', (gltf) => {
     const model = gltf.scene;
-    model.scale.setScalar(1.48);
+    model.scale.setScalar(1.52);
+    // Natural ergonomic angle approaching slightly from lower-right so index & fingers read clearly in 3/4 view!
+    model.rotation.set(0.18, 0.28, -0.14);
     model.traverse((o) => {
       if (o.isMesh) {
         o.castShadow = true;
@@ -1517,18 +1519,31 @@ function setupScrollChoreography() {
     ease: 'sine.inOut',
   })
 
-  // 02 -> 03: Front-Right Close-Up on VL53L7CX + AUTOMATIC 8x8 Infrared Laser Cone
+  // 02 -> 03: Cinematic 3/4 Side-Front Perspective showing BOTH the chubby 3D cartoon hand gesturing in profile
+  //           inside the glowing 8x8 ToF laser cone AND the live animated TFT cursor/Dwell/Swipe!
   .to(state, {
-    camX: isMobile ? 1.0 : 1.75,
-    camY: 2.85,
-    camZ: isMobile ? 5.2 : 4.45,
-    targetX: isMobile ? 0.2 : -0.32,
-    targetY: 2.55,
-    modelRotY: -0.25,
+    camX: isMobile ? 3.5 : 4.55,
+    camY: 2.95,
+    camZ: isMobile ? 4.1 : 3.25,
+    targetX: isMobile ? 0.15 : -0.18,
+    targetY: 2.58,
+    targetZ: 0.45,
+    modelRotY: 0.24,
     headTiltDeg: -6,
     beamIntensity: 1.0,
-    duration: 1.05,
+    duration: 0.95,
     ease: 'power2.inOut',
+  })
+  .to(state, {
+    camX: isMobile ? 2.5 : 3.45,
+    camY: 3.08,
+    camZ: isMobile ? 4.7 : 4.05,
+    targetX: isMobile ? 0.1 : -0.22,
+    targetY: 2.56,
+    targetZ: 0.35,
+    modelRotY: 0.06,
+    duration: 0.65,
+    ease: 'sine.inOut',
   })
 
   // 03 -> 04: AUTOMATIC X-RAY + 180° ORBIT AROUND BACK showing packed internals!
@@ -1541,6 +1556,7 @@ function setupScrollChoreography() {
     camZ: isMobile ? 6.2 : 5.4,
     targetX: isMobile ? 0 : 0.65,
     targetY: 2.0,
+    targetZ: 0.0,
     modelRotY: 2.35, // Smooth spin to rear 3/4 view!
     duration: 1.2,
     ease: 'power2.inOut',

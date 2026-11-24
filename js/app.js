@@ -545,25 +545,32 @@ function createCartoonHandGroup() {
   const hand = new THREE.Group();
   root.add(hand);
 
-  // Load smooth organic SDF-sculpted chubby 3D cartoon gloved hand (pointing index toward -Z!)
-  const handLoader = new GLTFLoader();
-  handLoader.load('assets/cartoon_hand.glb?v=3', (gltf) => {
-    const model = gltf.scene;
-    model.scale.setScalar(1.38);
-    // Natural Topolino pointing angle: slightly tilted so the 3 black dorsal stripes + thumb + index all read clearly from LEFT camera!
-    model.rotation.set(0.22, -0.12, 0.18);
-    model.traverse((o) => {
-      if (o.isMesh) {
-        o.castShadow = true;
-        o.receiveShadow = true;
-        if (o.material) {
-          o.material.depthWrite = true;
-          o.material.depthTest = true;
+  // Lazy-load 3D cartoon hand GLB after initial hero boot (or on first scroll past Ch 01) so initial load stays ultra-fast!
+  let handLoaded = false;
+  function ensureLoaded() {
+    if (handLoaded) return;
+    handLoaded = true;
+    const handLoader = new GLTFLoader();
+    handLoader.load('assets/cartoon_hand.glb?v=4', (gltf) => {
+      const model = gltf.scene;
+      model.scale.setScalar(1.38);
+      // Natural Topolino pointing angle: slightly tilted so the 3 black dorsal stripes + thumb + index all read clearly from LEFT camera!
+      model.rotation.set(0.22, -0.12, 0.18);
+      model.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+          if (o.material) {
+            o.material.depthWrite = true;
+            o.material.depthTest = true;
+          }
         }
-      }
+      });
+      hand.add(model);
     });
-    hand.add(model);
-  });
+  }
+  // Pre-warm quietly after 3.2s idle so it's instant when reaching Chapter 03 without blocking initial boot!
+  setTimeout(ensureLoaded, 3200);
 
   // Subtle glowing yellow target halo right in front of the pointing index fingertip (-0.14, 0.02, -0.44)
   const tipRingMat = new THREE.MeshBasicMaterial({
@@ -610,7 +617,7 @@ function createCartoonHandGroup() {
   root.add(spotMesh);
 
   root.visible = false;
-  root.userData = { hand, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat };
+  root.userData = { hand, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat, ensureLoaded };
   return root;
 }
 
@@ -682,7 +689,7 @@ function createFiorentinaGroup() {
   extrudeGeo.rotateX(-Math.PI / 2);
 
   const texLoader = new THREE.TextureLoader();
-  const topTex = texLoader.load('assets/media/fiorentina_top.png?v=1');
+  const topTex = texLoader.load('assets/media/fiorentina_top.webp?v=2');
   topTex.colorSpace = THREE.SRGBColorSpace;
 
   const topMat = new THREE.MeshStandardMaterial({
@@ -1095,7 +1102,7 @@ window.ponduloLiveSim = {
 
 const loader = new GLTFLoader();
 if (renderer) loader.load(
-  'assets/pondulo.glb?v=5',
+  'assets/pondulo.glb?v=6',
   (gltf) => {
     ponduloRoot = gltf.scene;
     scene.add(ponduloRoot);
@@ -1326,6 +1333,23 @@ function updateHotspotPositions() {
   } else {
     visibleIds = CHAPTER_PINS[state.activeChapter] || [];
   }
+
+  // Fast-path: avoid rebuilding empty SVG / touching DOM at 60 FPS when no pins are visible!
+  if (visibleIds.length === 0) {
+    if (!updateHotspotPositions._wasEmpty) {
+      HOTSPOTS.forEach((item) => {
+        const el = pinElements.get(item.id);
+        if (el) {
+          el.classList.remove('visible', 'spotlight');
+          el.classList.add('hidden-pin');
+        }
+      });
+      leadersSvg.innerHTML = '';
+      updateHotspotPositions._wasEmpty = true;
+    }
+    return;
+  }
+  updateHotspotPositions._wasEmpty = false;
 
   const visibleSet = new Set(visibleIds);
   const isSpotlight = !state.manualOverride && state.activeChapter >= 4 && state.activeChapter <= 9;
@@ -2197,6 +2221,9 @@ function applyRigState(elapsed) {
 
   let gestureTft = null;
   if (cartoonHand) {
+    if (state.scrollProgress > 0.04 || bi > 0.05) {
+      cartoonHand.userData.ensureLoaded?.();
+    }
     cartoonHand.visible = bi > 0.15;
     if (cartoonHand.visible) {
       const ud = cartoonHand.userData;
@@ -2459,6 +2486,9 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
   }
 
   function openLightbox() {
+    if (!img.getAttribute('src') && img.dataset.src) {
+      img.src = img.dataset.src;
+    }
     scale = 1.0; tx = 0; ty = 0;
     renderTransform();
     lb.classList.add('open');

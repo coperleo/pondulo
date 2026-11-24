@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
-  <link rel="stylesheet" href="css/style.css?v=9" />
+  <link rel="stylesheet" href="css/style.css?v=10" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -88,6 +88,9 @@
       <!-- Projected 3D Hotspot Pins Container -->
       <div class="hotspots-layer" id="hotspots-layer" aria-live="polite"></div>
 
+      <!-- 12-Dot Vertical Chapter Quick-Jump Rail -->
+      <nav class="chapter-rail" id="chapter-rail" aria-label="Navigazione rapida capitoli 3D"></nav>
+
       <!-- Floating Component Detail Drawer (also clickable in Inspector / Full Explode) -->
       <aside class="component-drawer" id="component-drawer" aria-hidden="true">
         <button class="drawer-close" id="drawer-close" aria-label="Chiudi scheda">&times;</button>
@@ -143,8 +146,8 @@
             <img src="assets/media/pondulo_wordmark.png?v=2" alt="PONDULO" />
           </h1>
           <p class="hero-lead">
-            La bilancia intelligente <strong>100% touchless</strong> per ambienti sterili e alimentari.
-            Nessun tasto fisico, zero contaminazione crociata: tutto si controlla nell'aria con un sensore laser <strong>ToF 8×8</strong> e tre microcontrollori <strong>STM32G474RE</strong>.
+            Una bilancia intelligente <strong>100% touchless</strong> pensata per banchi alimentari, ambulatori e laboratori.
+            Senza tasti fisici né touchscreen da toccare, tutto si comanda muovendo la mano nell'aria grazie a un sensore laser <strong>ToF 8×8</strong> e tre microcontrollori <strong>STM32G474RE</strong>.
           </p>
           <div class="hero-metrics">
             <div class="metric">
@@ -203,9 +206,9 @@
             anche con guanti chirurgici o in nitrile di qualsiasi colore.
           </p>
           <ul class="feature-list">
-            <li><strong>Air-Cursor fluido:</strong> baricentro spaziale Q16 con glide EMA a 100 Hz.</li>
-            <li><strong>Dwell Select (1,5 s):</strong> sostare su un tasto lo conferma senza toccare lo schermo.</li>
-            <li><strong>Air-Swipe & Depth:</strong> gesti in 4 direzioni + soglie <code>&lt;90 mm</code> / <code>&gt;190 mm</code>.</li>
+            <li><strong>Cursore fluido nell'aria:</strong> il firmware ricava il baricentro della mano in virgola fissa Q16 e lo stabilizza con filtro EMA a 100 Hz.</li>
+            <li><strong>Selezione a sosta (1,5 s):</strong> basta fermare il cursore su un pulsante per confermarlo senza toccare lo schermo.</li>
+            <li><strong>Gesti in aria e profondità:</strong> swipe in 4 direzioni più soglie di distanza <code>&lt;90 mm</code> e <code>&gt;190 mm</code> per entrare o uscire dai menu.</li>
           </ul>
         </div>
       </article>
@@ -464,9 +467,8 @@
           <span class="section-kicker">INGEGNERIA EMBEDDED · CHIBIOS/RT</span>
           <h2>Architettura distribuita a 3 MCU + nodo Wi-Fi.</h2>
           <p class="section-intro">
-            Per garantire determinismo real-time senza colli di bottiglia tra scansione laser ToF, rendering grafico SPI,
-            multiplexing LED e acquisizione metrologica a 24 bit, il sistema divide il carico su tre <strong>STM32 NUCLEO-G474RE</strong> (Cortex-M4 @ 170 MHz)
-            affiancate da un modulo <strong>ESP8266</strong> per l'aggiornamento remoto del listino prezzi.
+            Invece di comprimere scansione laser ToF, grafica SPI, multiplexing LED e lettura della cella di carico su un solo microcontrollore,
+            abbiamo diviso il lavoro su tre <strong>STM32 NUCLEO-G474RE</strong> (Cortex-M4 @ 170 MHz), affiancate da un modulo <strong>ESP8266</strong> per aggiornare i prezzi via Wi-Fi.
           </p>
         </div>
 
@@ -544,7 +546,7 @@
             <h4>Perché un ponte analogico DAC → ADC?</h4>
             <p>
               Dopo aver testato sia un link seriale UART (affetto da errori di framing per contesa su USART3) sia un link PWM (soggetto a jitter di ±2–3 g che forzava ridisegni continui del display),
-              il team ha optato per una <strong>tensione DC pura</strong> generata dal DAC hardware su <code>PA4</code> e campionata dall'ADC2 della Scheda B: latenza zero, nessun pacchetto da decodificare, lettura granitica.
+              il team ha optato per una <strong>tensione DC pura</strong> generata dal DAC hardware su <code>PA4</code> e campionata dall'ADC2 della Scheda B: latenza zero, nessun pacchetto da decodificare e lettura stabile senza oscillazioni.
             </p>
           </div>
           <div class="decision-card">
@@ -597,12 +599,12 @@
         <div class="section-head">
           <div class="kicker-with-icon">
             <img src="assets/media/pondulo_icon.png" alt="" class="inline-app-icon" loading="lazy" aria-hidden="true" />
-            <span class="section-kicker">VERSATILITÀ APPLICATIVA</span>
+            <span class="section-kicker">DOVE SI PUÒ USARE</span>
           </div>
           <h2>Un solo dispositivo, tre ambiti d'uso.</h2>
           <p class="section-intro">
-            L'interfaccia di PONDULO nasce modulare: con un singolo gesto dalla Home l'operatore cambia contesto operativo,
-            trasformando il dispositivo da bilancia commerciale touchless a terminale clinico sterile.
+            L'interfaccia di PONDULO è modulare: già dalla schermata Home basta un gesto per passare dalla modalità bilancia commerciale (Macelleria)
+            a quella pensata per ambulatori e ambienti sterili.
           </p>
         </div>
 
@@ -642,15 +644,15 @@
 
         <div class="scenario-panel" id="tab-clinical">
           <div class="scenario-copy">
-            <h3>Salvaguardia della catena sterile</h3>
+            <h3>Lavorare senza interrompere la sterilità</h3>
             <p>
               In ambulatori, sale operatorie e reparti ospedalieri, consultare dati clinici o pesare campioni biologici senza toccare
-              superfici non sterili azzera i tempi di cambio guanti e riduce il rischio di infezioni correlate all'assistenza (ICA).
+              superfici non sterili evita continui cambi di guanti e riduce il rischio di contaminazione.
             </p>
             <ul>
               <li><strong>Cartella Clinica Touchless:</strong> visualizzazione immediata di Frequenza Cardiaca (BPM), Pressione Arteriosa, SpO₂ e Temperatura.</li>
               <li><strong>Anamnesi con Air-Swipe:</strong> sfogliamento gestuale di età, gruppo sanguigno, allergie, terapia in corso e reparto.</li>
-              <li><strong>Feedback acustico discreto:</strong> conferma sonora che evita all'operatore di distogliere lo sguardo dal campo sterile.</li>
+              <li><strong>Feedback acustico discreto:</strong> conferma sonora per ogni comando, così l'operatore non deve distogliere lo sguardo dal lavoro.</li>
             </ul>
           </div>
           <div class="scenario-mockup">
@@ -916,6 +918,6 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=6"></script>
+  <script type="module" src="js/app.js?v=7"></script>
 </body>
 </html>

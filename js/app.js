@@ -152,7 +152,7 @@ const HOTSPOTS = [
     badge: 'AUDIO · SERIAL MP3 v1.2',
     title: 'Modulo Serial MP3 YX5300',
     subtitle: 'MicroSD FAT + Protocollo 8-byte UART5',
-    desc: 'Riproduce tracce audio per ogni evento touchless (benvenuto, ding-dong bilancia, beep tastierino, suono cassa scontrino) scaricando la MCU dal decoding audio.',
+    desc: 'Riproduce le tracce audio per ogni azione touchless (benvenuto, ingresso bilancia, beep tastierino e scontrino) così il microcontrollore non deve occuparsi della decodifica MP3.',
     specs: [
       ['Bus', 'UART5 · 9600 baud 8N1'],
       ['Frame', '0x7E 0xFF 0x06 CMD ... 0xEF'],
@@ -248,12 +248,12 @@ const HOTSPOTS = [
     badge: 'ACUSTICA · BASE',
     title: 'Altoparlante Circolare 45 mm',
     subtitle: 'Montato sul telaio inferiore a X',
-    desc: 'Diffonde i segnali sonori di conferma (benvenuto, ingresso bilancia, pressione tasti touchless, stampa scontrino) garantendo feedback chiaro anche in ambienti rumorosi.',
+    desc: 'Riproduce i suoni di conferma (benvenuto, ingresso bilancia, pressione tasti touchless, stampa scontrino) in modo chiaro anche in ambienti di lavoro rumorosi.',
     specs: [
       ['Diametro', '45 mm · magnete permanente'],
-      ['Montaggio', 'Ancorato al braccio X inferiore'],
+      ['Montaggio', 'Fissato al braccio X inferiore'],
       ['Pilotaggio', 'Dallo stadio amplificatore base'],
-      ['Ruolo UX', 'Conferma acustica zero-sguardo'],
+      ['Ruolo', 'Conferma sonora immediata'],
     ],
   },
 ];
@@ -346,14 +346,46 @@ controls.maxPolarAngle = Math.PI - 0.05;
 controls.target.set(0, 1.65, 0);
 controls.enabled = false;
 
+const raycaster = new THREE.Raycaster();
+const pointerNDC = new THREE.Vector2();
+let pointerDownXY = null;
+let flyTarget = null;
+
 canvas.addEventListener('contextmenu', (e) => {
   if (state.freeOrbit) e.preventDefault();
 });
-canvas.addEventListener('pointerdown', () => {
+canvas.addEventListener('pointerdown', (e) => {
+  flyTarget = null; // User interaction immediately cancels smooth camera glide
+  pointerDownXY = { x: e.clientX, y: e.clientY };
   if (state.freeOrbit) canvas.style.cursor = 'grabbing';
 });
-window.addEventListener('pointerup', () => {
+canvas.addEventListener('wheel', () => {
+  flyTarget = null;
+}, { passive: true });
+window.addEventListener('pointerup', (e) => {
   if (state.freeOrbit) canvas.style.cursor = 'grab';
+  if (!state.freeOrbit || !pointerDownXY || !ponduloRoot || e.button !== 0) return;
+  const dist = Math.hypot(e.clientX - pointerDownXY.x, e.clientY - pointerDownXY.y);
+  pointerDownXY = null;
+  if (dist > 6) return; // Was a drag/orbit, not a click
+
+  const rect = canvas.getBoundingClientRect();
+  pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointerNDC, camera);
+  const hits = raycaster.intersectObjects(ponduloRoot.children, true);
+  for (const hit of hits) {
+    let cur = hit.object;
+    while (cur && cur !== ponduloRoot) {
+      const hs = HOTSPOTS.find((h) => h.id === cur.name);
+      if (hs) {
+        openDrawer(hs);
+        focusPartInFreeOrbit(hs.id);
+        return;
+      }
+      cur = cur.parent;
+    }
+  }
 });
 
 // Studio Lighting
@@ -521,7 +553,7 @@ function attachXrayContour(mesh, targetList) {
 
 const loader = new GLTFLoader();
 loader.load(
-  'assets/pondulo.glb?v=3',
+  'assets/pondulo.glb?v=4',
   (gltf) => {
     ponduloRoot = gltf.scene;
     scene.add(ponduloRoot);
@@ -613,6 +645,7 @@ function buildHotspotDOM() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       openDrawer(h);
+      if (state.freeOrbit) focusPartInFreeOrbit(h.id);
     });
     hotspotsLayer.appendChild(btn);
     pinElements.set(h.id, btn);
@@ -854,6 +887,25 @@ function setupScrollChoreography() {
   const isMobile = window.innerWidth < 768;
   const dock = document.getElementById('inspector-dock');
   const chapters = document.querySelectorAll('.chapter');
+  const rail = document.getElementById('chapter-rail');
+  const railDots = [];
+
+  if (rail) {
+    rail.innerHTML = '';
+    chapters.forEach((el, idx) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'rail-dot' + (idx === 0 ? ' active' : '');
+      dot.dataset.label = CHAPTER_LABELS[idx] || `Capitolo ${idx + 1}`;
+      dot.setAttribute('aria-label', dot.dataset.label);
+      dot.addEventListener('click', () => {
+        if (state.freeOrbit) setFreeOrbit(false);
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      rail.appendChild(dot);
+      railDots.push(dot);
+    });
+  }
 
   // Track which chapter is currently centered in viewport for crisp HUD & pins
   chapters.forEach((el, idx) => {
@@ -870,6 +922,7 @@ function setupScrollChoreography() {
     if (state.activeChapter === idx) return;
     state.activeChapter = idx;
     hudChapter.textContent = CHAPTER_LABELS[idx] || '';
+    railDots.forEach((d, i) => d.classList.toggle('active', i === idx));
     if (idx < 10) closeDrawer();
   }
 
@@ -1073,7 +1126,16 @@ function setupScrollChoreography() {
 // 7. INTERACTIVE INSPECTOR CONTROLS (360° ORBIT + SCREEN-SPACE PAN + CLOSE ZOOM)
 // ─────────────────────────────────────────────────────────────────────────────
 
+function focusPartInFreeOrbit(partId) {
+  const obj = partMap.get(partId);
+  if (!obj) return;
+  const box = new THREE.Box3().setFromObject(obj);
+  if (box.isEmpty()) return;
+  flyTarget = box.getCenter(new THREE.Vector3());
+}
+
 function resetInspectorCamera() {
+  flyTarget = null;
   const isMobile = window.innerWidth < 768;
   camera.position.set(isMobile ? 2.6 : 3.2, 2.65, isMobile ? 8.8 : 7.4);
   controls.target.set(0.0, 1.85, 0.0);
@@ -1301,10 +1363,15 @@ function applyRigState(elapsed) {
 
   // Camera tracking
   if (!state.freeOrbit) {
+    flyTarget = null;
     camera.position.lerp(tmpVec.set(state.camX, state.camY, state.camZ), 0.11);
     controls.target.lerp(tmpTarget.set(state.targetX, state.targetY, state.targetZ), 0.11);
     camera.lookAt(controls.target);
   } else {
+    if (flyTarget) {
+      controls.target.lerp(flyTarget, 0.12);
+      if (controls.target.distanceTo(flyTarget) < 0.015) flyTarget = null;
+    }
     controls.update();
   }
 

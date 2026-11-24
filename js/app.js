@@ -1439,10 +1439,69 @@ function setupScrollChoreography() {
   gsap.registerPlugin(ScrollTrigger);
 
   const isMobile = window.innerWidth < 768;
+  const scrollyStage = document.querySelector('.scrolly-stage');
   const dock = document.getElementById('inspector-dock');
-  const chapters = document.querySelectorAll('.chapter');
+  const chapters = Array.from(document.querySelectorAll('.chapter'));
   const rail = document.getElementById('chapter-rail');
+  const btnPrevCh = document.getElementById('btn-prev-chapter');
+  const btnNextCh = document.getElementById('btn-next-chapter');
+  const stepperCount = document.getElementById('stepper-count');
   const railDots = [];
+  let scrollTween = null;
+  let targetChapterIdx = null;
+
+  function scrollToChapter(idx) {
+    const clamped = THREE.MathUtils.clamp(idx, 0, chapters.length - 1);
+    const targetEl = chapters[clamped];
+    if (!targetEl) return;
+    if (state.freeOrbit) setFreeOrbit(false);
+    targetChapterIdx = clamped;
+    updateStepperUI(clamped);
+
+    let targetY;
+    if (clamped === 0) {
+      targetY = 0;
+    } else if (clamped === chapters.length - 1) {
+      const rect = targetEl.getBoundingClientRect();
+      targetY = Math.max(0, rect.top + window.scrollY - 24);
+    } else {
+      const rect = targetEl.getBoundingClientRect();
+      targetY = Math.max(0, rect.top + window.scrollY - (window.innerHeight - rect.height) * 0.5);
+    }
+
+    if (scrollTween) scrollTween.kill();
+    const proxy = { y: window.scrollY };
+    scrollTween = gsap.to(proxy, {
+      y: targetY,
+      duration: 1.05,
+      ease: 'power2.inOut',
+      onUpdate: () => window.scrollTo(0, proxy.y),
+      onComplete: () => {
+        scrollTween = null;
+        targetChapterIdx = null;
+      },
+    });
+  }
+
+  // Cancel programmatic chapter glide immediately if user manually scrolls with wheel/touch
+  const cancelAutoScroll = () => {
+    if (scrollTween) {
+      scrollTween.kill();
+      scrollTween = null;
+      targetChapterIdx = null;
+    }
+  };
+  window.addEventListener('wheel', cancelAutoScroll, { passive: true });
+  window.addEventListener('touchstart', cancelAutoScroll, { passive: true });
+
+  btnPrevCh?.addEventListener('click', () => {
+    const base = targetChapterIdx !== null ? targetChapterIdx : state.activeChapter;
+    scrollToChapter(base - 1);
+  });
+  btnNextCh?.addEventListener('click', () => {
+    const base = targetChapterIdx !== null ? targetChapterIdx : state.activeChapter;
+    scrollToChapter(base + 1);
+  });
 
   if (rail) {
     rail.innerHTML = '';
@@ -1452,10 +1511,7 @@ function setupScrollChoreography() {
       dot.className = 'rail-dot' + (idx === 0 ? ' active' : '');
       dot.dataset.label = CHAPTER_LABELS[idx] || `Capitolo ${idx + 1}`;
       dot.setAttribute('aria-label', dot.dataset.label);
-      dot.addEventListener('click', () => {
-        if (state.freeOrbit) setFreeOrbit(false);
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
+      dot.addEventListener('click', () => scrollToChapter(idx));
       rail.appendChild(dot);
       railDots.push(dot);
     });
@@ -1472,11 +1528,21 @@ function setupScrollChoreography() {
     });
   });
 
+  function updateStepperUI(idx) {
+    if (stepperCount) {
+      stepperCount.textContent = `${String(idx + 1).padStart(2, '0')} / ${chapters.length}`;
+    }
+    if (btnPrevCh) btnPrevCh.disabled = idx <= 0;
+    if (btnNextCh) btnNextCh.disabled = idx >= chapters.length - 1;
+  }
+  updateStepperUI(0);
+
   function setActiveChapter(idx) {
     if (state.activeChapter === idx) return;
     state.activeChapter = idx;
     hudChapter.textContent = CHAPTER_LABELS[idx] || '';
     railDots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    updateStepperUI(idx);
     if (idx < 10) closeDrawer();
   }
 
@@ -1495,7 +1561,9 @@ function setupScrollChoreography() {
           state.manualOverride = false;
           if (state.freeOrbit) setFreeOrbit(false);
         }
-        dock.classList.toggle('visible', self.progress > 0.86);
+        const dockShown = self.progress > 0.86;
+        dock.classList.toggle('visible', dockShown);
+        scrollyStage?.classList.toggle('dock-visible', dockShown);
       },
     },
   });

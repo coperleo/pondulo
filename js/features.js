@@ -78,6 +78,8 @@ function initPonduloSimulator() {
     cartTotal: 0,
     cx: 0.5,
     cy: 0.5,
+    targetX: 0.5,
+    targetY: 0.5,
     handActive: false,
     hoverBtnId: null,
     dwellStart: 0,
@@ -295,10 +297,34 @@ function initPonduloSimulator() {
   function updateCursorDOM() {
     const cur = document.getElementById('stft-cursor');
     if (!cur) return;
-    cur.style.left = `${(sim.cx * 100).toFixed(1)}%`;
-    cur.style.top = `${(sim.cy * 100).toFixed(1)}%`;
+    const sw = screen.clientWidth || 320;
+    const sh = screen.clientHeight || 280;
+    const px = sim.cx * sw;
+    const py = sim.cy * sh;
+    cur.style.transform = `translate3d(${(px - 7.5).toFixed(1)}px, ${(py - 7.5).toFixed(1)}px, 0)`;
     cur.style.opacity = sim.handActive ? '1' : '0.45';
   }
+
+  // Smooth EMA glide loop (mirrors PONDULO's real 100 Hz EMA cursor filter!)
+  let lastGlideT = performance.now();
+  function glideLoop(now) {
+    const dt = Math.min(0.05, Math.max(0.001, (now - lastGlideT) / 1000));
+    lastGlideT = now;
+    const alpha = 1 - Math.exp(-dt * 8.0);
+    const dx = sim.targetX - sim.cx;
+    const dy = sim.targetY - sim.cy;
+    if (Math.abs(dx) > 0.00035 || Math.abs(dy) > 0.00035) {
+      sim.cx += dx * alpha;
+      sim.cy += dy * alpha;
+      updateCursorDOM();
+      if (sim.handActive) {
+        updateHeatmap(sim.cx, sim.cy);
+        sync3DModel(true);
+      }
+    }
+    requestAnimationFrame(glideLoop);
+  }
+  requestAnimationFrame(glideLoop);
 
   function handlePadMove(clientX, clientY) {
     const rect = pad.getBoundingClientRect();
@@ -318,8 +344,8 @@ function initPonduloSimulator() {
       sim.lastSwipeT = now;
     }
 
-    sim.cx = u;
-    sim.cy = v;
+    sim.targetX = u;
+    sim.targetY = v;
     sim.handActive = true;
     updateHeatmap(u, v);
     updateCursorDOM();

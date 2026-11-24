@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
-  <link rel="stylesheet" href="css/style.css?v=12" />
+  <link rel="stylesheet" href="css/style.css?v=13" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -91,6 +91,17 @@
 
       <!-- 12-Dot Vertical Chapter Quick-Jump Rail -->
       <nav class="chapter-rail" id="chapter-rail" aria-label="Navigazione rapida capitoli 3D"></nav>
+
+      <!-- Smooth Chapter Prev / Next Arrow Controls -->
+      <div class="chapter-stepper" id="chapter-stepper" aria-label="Scorri capitoli 3D">
+        <button type="button" class="stepper-btn" id="btn-prev-chapter" aria-label="Capitolo precedente" title="Capitolo precedente" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+        <span class="stepper-count" id="stepper-count">01 / 12</span>
+        <button type="button" class="stepper-btn stepper-btn-next" id="btn-next-chapter" aria-label="Capitolo successivo" title="Capitolo successivo">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
 
       <!-- Floating Component Detail Drawer (also clickable in Inspector / Full Explode) -->
       <aside class="component-drawer" id="component-drawer" aria-hidden="true">
@@ -1023,8 +1034,8 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=15"></script>
-  <script type="module" src="js/features.js?v=4"></script>
+  <script type="module" src="js/app.js?v=16"></script>
+  <script type="module" src="js/features.js?v=5"></script>
   <script type="module" src="js/i18n.js?v=3"></script>
 </body>
 </html>

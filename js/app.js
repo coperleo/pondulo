@@ -308,30 +308,68 @@ const hudChapter = document.getElementById('hud-chapter');
 const hudTelemetry = document.getElementById('hud-telemetry');
 const progressBar = document.getElementById('scroll-progress-bar');
 
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: true,
-  alpha: true,
-  powerPreference: 'high-performance',
-});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.12;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+function computeDynamicFov() {
+  const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+  // Gently widen FOV on narrow portrait phones so full PONDULO + 3D hand + explode never clip horizontally
+  if (aspect < 0.85) {
+    return THREE.MathUtils.clamp(34 + (0.85 - aspect) * 26, 34, 46);
+  }
+  return 34;
+}
+
+const isSmallScreenInit = window.innerWidth < 768;
+let renderer = null;
+let webglLost = false;
+try {
+  renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: !isSmallScreenInit || (window.devicePixelRatio || 1) <= 2,
+    alpha: true,
+    powerPreference: 'high-performance',
+  });
+} catch (err) {
+  console.error('WebGL non disponibile:', err);
+  if (loaderOverlay) {
+    const txt = loaderOverlay.querySelector('.loader-text');
+    if (txt) txt.textContent = 'WEBGL NON DISPONIBILE SU QUESTO DISPOSITIVO — SCORRI PER SIMULATORE E SCHEDE';
+    const ring = loaderOverlay.querySelector('.loader-ring');
+    if (ring) ring.style.display = 'none';
+  }
+}
+
+if (renderer) {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isSmallScreenInit ? 1.5 : 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  canvas?.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    webglLost = true;
+  });
+  canvas?.addEventListener('webglcontextrestored', () => {
+    webglLost = false;
+  });
+}
 
 const scene = new THREE.Scene();
 
-const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.65;
+if (renderer) {
+  try {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environmentIntensity = 0.65;
+    pmrem.dispose();
+  } catch { /* fallback to directional lights */ }
+}
 
-const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 70);
+const camera = new THREE.PerspectiveCamera(computeDynamicFov(), window.innerWidth / Math.max(1, window.innerHeight), 0.1, 70);
 camera.position.set(0.45, 2.25, 7.5);
 
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer ? renderer.domElement : canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.065;
 controls.enablePan = true;
@@ -392,7 +430,7 @@ window.addEventListener('pointerup', (e) => {
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.4);
 keyLight.position.set(5.0, 8.0, 6.5);
 keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(1024, 1024);
+keyLight.shadow.mapSize.set(isSmallScreenInit ? 512 : 1024, isSmallScreenInit ? 512 : 1024);
 keyLight.shadow.bias = -0.0001;
 keyLight.shadow.normalBias = 0.038;
 scene.add(keyLight);
@@ -1056,7 +1094,7 @@ window.ponduloLiveSim = {
 };
 
 const loader = new GLTFLoader();
-loader.load(
+if (renderer) loader.load(
   'assets/pondulo.glb?v=5',
   (gltf) => {
     ponduloRoot = gltf.scene;
@@ -1075,26 +1113,35 @@ loader.load(
         const parentName = obj.parent?.name || '';
         const groupId = HOTSPOTS.some((h) => h.id === ownerName) ? ownerName : (HOTSPOTS.some((h) => h.id === parentName) ? parentName : '');
 
+        // Clone single-material meshes ONCE if needed so live displays, LEDs & isolate mode NEVER lose material references!
+        let matCloned = false;
+        const ensureClonedMat = () => {
+          if (!matCloned && obj.material && !Array.isArray(obj.material)) {
+            obj.material = obj.material.clone();
+            matCloned = true;
+          }
+        };
+
         // Live animated 3D CanvasTexture screens (TFT ILI9341 + 8-Digit Red 7-Segment!)
         if (obj.material?.name === 'tft_screen' && liveDisplays) {
-          obj.material = obj.material.clone();
+          ensureClonedMat();
           obj.material.map = liveDisplays.tftTex;
           obj.material.emissiveMap = liveDisplays.tftTex;
           obj.material.needsUpdate = true;
         } else if (obj.material?.name === 'seven_seg' && liveDisplays) {
-          obj.material = obj.material.clone();
+          ensureClonedMat();
           obj.material.map = liveDisplays.segTex;
           obj.material.emissiveMap = liveDisplays.segTex;
           obj.material.needsUpdate = true;
         } else if (obj.material?.name === 'led_green') {
-          obj.material = obj.material.clone();
+          ensureClonedMat();
           ledGreenMaterials.push(obj.material);
         }
 
         // Clone PLA shell materials independently so Head X-Ray and Base X-Ray NEVER interfere!
         if (ownerName === 'head_shell' || parentName === 'head_shell' || ownerName === 'hinge_clamps' || parentName === 'hinge_clamps') {
           if (obj.material?.name === 'pla_red') {
-            obj.material = obj.material.clone();
+            ensureClonedMat();
             obj.material.side = THREE.FrontSide;
             headShellMeshes.push(obj);
             attachCadInkOutline(obj, 28);
@@ -1104,7 +1151,7 @@ loader.load(
           }
         } else if (ownerName === 'base_column' || parentName === 'base_column') {
           if (obj.material?.name === 'pla_red') {
-            obj.material = obj.material.clone();
+            ensureClonedMat();
             obj.material.side = THREE.FrontSide;
             baseShellMeshes.push(obj);
             attachCadInkOutline(obj, 28);
@@ -1115,12 +1162,12 @@ loader.load(
             attachCadInkOutline(obj, 30);
           }
         } else if (ownerName === 'nisc_badge' || parentName === 'nisc_badge') {
-          obj.material = obj.material.clone();
+          ensureClonedMat();
           badgeMaterials.push(obj.material);
         }
 
         if (groupId && obj.material && !Array.isArray(obj.material)) {
-          obj.material = obj.material.clone();
+          ensureClonedMat();
           isolateTrackedMeshes.push({ mesh: obj, groupId, origOpacity: obj.material.opacity ?? 1, origTrans: !!obj.material.transparent });
         }
 
@@ -1284,11 +1331,13 @@ function updateHotspotPositions() {
   const isSpotlight = !state.manualOverride && state.activeChapter >= 4 && state.activeChapter <= 9;
   const cardSide = state.manualOverride ? 'none' : (CHAPTER_CARD_SIDE[state.activeChapter] || 'none');
 
-  // Safe viewport margins (avoids topbar, inspector dock, and narrative card)
-  const minY = (cardSide === 'top' ? 235 : 108);
-  const maxY = h - (state.activeChapter >= 11 ? 108 : 42);
-  const minX = (!isMobile && cardSide === 'left') ? Math.min(w * 0.42, 510) : 92;
-  const maxX = (!isMobile && cardSide === 'right') ? Math.max(w * 0.58, w - 510) : w - 92;
+  // Safe viewport margins (avoids topbar, inspector dock, and narrative card — including bottom cards on mobile)
+  const minY = isMobile ? 96 : (cardSide === 'top' ? 235 : 108);
+  const maxY = isMobile
+    ? (state.freeOrbit ? h - 130 : Math.max(180, Math.min(h * 0.54, h - 255)))
+    : (h - (state.activeChapter >= 11 ? 108 : 42));
+  const minX = isMobile ? 64 : (cardSide === 'left' ? Math.min(w * 0.42, 510) : 92);
+  const maxX = isMobile ? (w - 64) : (cardSide === 'right' ? Math.max(w * 0.58, w - 510) : w - 92);
 
   const placed = [];
   const componentBoxes = [];
@@ -1436,6 +1485,7 @@ function updateHotspotPositions() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function setupScrollChoreography() {
+  if (!window.gsap || !window.ScrollTrigger) return;
   gsap.registerPlugin(ScrollTrigger);
 
   const isMobile = window.innerWidth < 768;
@@ -1794,8 +1844,27 @@ function setFreeOrbit(enable) {
     banner.setAttribute('aria-hidden', enable ? 'false' : 'true');
   }
   if (btn) {
+    const isEn = window.ponduloLang === 'en';
     btn.classList.toggle('active', enable);
-    btn.textContent = enable ? '✕ Esci da 360°' : '🧭 Esplora 360°';
+    btn.textContent = enable
+      ? (isEn ? '✕ Exit 360°' : '✕ Esci da 360°')
+      : (isEn ? '🧭 Explore 360°' : '🧭 Esplora 360°');
+  }
+  if (banner) {
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    const isEn = window.ponduloLang === 'en';
+    const labelSpan = banner.querySelector('span:last-child');
+    if (labelSpan) {
+      if (isTouch) {
+        labelSpan.innerHTML = isEn
+          ? '<strong>FREE 3D MODE</strong> · 1 finger: Rotate · 2 fingers: Zoom / Pan'
+          : '<strong>ESPLORAZIONE 3D</strong> · 1 dito: Ruota · 2 dita: Zoom / Trasla';
+      } else {
+        labelSpan.innerHTML = isEn
+          ? '<strong>FREE 3D EXPLORATION</strong> · Left: Rotate 360° · Right / Shift: Pan · Wheel: Zoom · <code>ESC</code> exit'
+          : '<strong>ESPLORAZIONE 3D LIBERA</strong> · SX: Ruota 360° · DX / Shift+SX: Trasla · Rotella: Zoom · <code>ESC</code> esci';
+      }
+    }
   }
   canvas.style.cursor = enable ? 'grab' : 'default';
 
@@ -2299,8 +2368,19 @@ function applyRigState(elapsed) {
   }
 }
 
+// Pause 3D WebGL render loop automatically when user scrolls past the 3D stage or hides the tab (saves mobile battery & GPU!)
+let stageVisible = true;
+const scrollyStageObserverEl = document.getElementById('top');
+if (scrollyStageObserverEl && 'IntersectionObserver' in window) {
+  const io = new IntersectionObserver((entries) => {
+    stageVisible = entries[0]?.isIntersecting ?? true;
+  }, { rootMargin: '180px 0px' });
+  io.observe(scrollyStageObserverEl);
+}
+
 function animate() {
   requestAnimationFrame(animate);
+  if (!renderer || webglLost || document.hidden || !stageVisible) return;
   const elapsed = clock.getElapsedTime();
   applyRigState(elapsed);
   renderer.render(scene, camera);
@@ -2308,11 +2388,23 @@ function animate() {
 }
 animate();
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+let resizeDebounce = null;
+function handleViewportResize() {
+  if (!renderer) return;
+  const w = window.innerWidth;
+  const h = Math.max(1, window.innerHeight);
+  camera.aspect = w / h;
+  camera.fov = computeDynamicFov();
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, w < 768 ? 1.5 : 2));
+  renderer.setSize(w, h);
+  clearTimeout(resizeDebounce);
+  resizeDebounce = setTimeout(() => {
+    if (window.ScrollTrigger) window.ScrollTrigger.refresh();
+  }, 180);
+}
+window.addEventListener('resize', handleViewportResize);
+window.addEventListener('orientationchange', handleViewportResize);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 9. EDITORIAL SCENARIO TABS
@@ -2394,6 +2486,10 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     e.preventDefault();
     setScale(scale + (e.deltaY < 0 ? 0.28 : -0.28));
   }, { passive: false });
+
+  stage.addEventListener('click', (e) => {
+    if (e.target === stage && scale <= 1.01) closeLightbox();
+  });
 
   stage.addEventListener('dblclick', () => {
     if (scale > 1.2) { scale = 1.0; tx = 0; ty = 0; renderTransform(); }

@@ -305,29 +305,32 @@ function initPonduloSimulator() {
     cur.style.opacity = sim.handActive ? '1' : '0.45';
   }
 
-  // Smooth EMA glide loop (mirrors PONDULO's real 100 Hz EMA cursor filter!)
+  // Smooth EMA glide loop (mirrors PONDULO's real 100 Hz EMA cursor filter; auto-pauses when tab is hidden)
   let lastGlideT = performance.now();
   function glideLoop(now) {
-    const dt = Math.min(0.05, Math.max(0.001, (now - lastGlideT) / 1000));
-    lastGlideT = now;
-    const alpha = 1 - Math.exp(-dt * 8.0);
-    const dx = sim.targetX - sim.cx;
-    const dy = sim.targetY - sim.cy;
-    if (Math.abs(dx) > 0.00035 || Math.abs(dy) > 0.00035) {
-      sim.cx += dx * alpha;
-      sim.cy += dy * alpha;
-      updateCursorDOM();
-      if (sim.handActive) {
-        updateHeatmap(sim.cx, sim.cy);
-        sync3DModel(true);
+    if (!document.hidden) {
+      const dt = Math.min(0.05, Math.max(0.001, (now - lastGlideT) / 1000));
+      const alpha = 1 - Math.exp(-dt * 8.0);
+      const dx = sim.targetX - sim.cx;
+      const dy = sim.targetY - sim.cy;
+      if (Math.abs(dx) > 0.00035 || Math.abs(dy) > 0.00035) {
+        sim.cx += dx * alpha;
+        sim.cy += dy * alpha;
+        updateCursorDOM();
+        if (sim.handActive) {
+          updateHeatmap(sim.cx, sim.cy);
+          sync3DModel(true);
+        }
       }
     }
+    lastGlideT = now;
     requestAnimationFrame(glideLoop);
   }
   requestAnimationFrame(glideLoop);
 
   function handlePadMove(clientX, clientY) {
     const rect = pad.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
     const u = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const v = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
     const now = performance.now();
@@ -347,20 +350,41 @@ function initPonduloSimulator() {
     sim.targetX = u;
     sim.targetY = v;
     sim.handActive = true;
-    updateHeatmap(u, v);
+    updateHeatmap(sim.cx, sim.cy);
     updateCursorDOM();
     sync3DModel(true);
   }
 
-  pad.addEventListener('pointermove', (e) => handlePadMove(e.clientX, e.clientY));
-  pad.addEventListener('pointerdown', (e) => handlePadMove(e.clientX, e.clientY));
-  pad.addEventListener('pointerleave', () => {
+  function clearHand() {
     sim.handActive = false;
     sim.hoverBtnId = null;
     sim.dwellPct = 0;
     sim.lastSwipeX = null;
     cells.forEach((c) => { c.style.background = 'rgba(255,255,255,0.03)'; c.textContent = ''; });
+    screen.querySelectorAll('.stft-btn').forEach((b) => {
+      b.classList.remove('dwell-focus');
+      const bar = b.querySelector('.stft-dwell');
+      if (bar) bar.style.width = '0%';
+    });
     updateCursorDOM();
+  }
+
+  pad.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse') {
+      try { pad.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+    }
+    handlePadMove(e.clientX, e.clientY);
+  });
+  pad.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse' && !sim.handActive) return;
+    handlePadMove(e.clientX, e.clientY);
+  });
+  pad.addEventListener('pointerup', (e) => {
+    if (e.pointerType !== 'mouse') clearHand();
+  });
+  pad.addEventListener('pointercancel', clearHand);
+  pad.addEventListener('pointerleave', (e) => {
+    if (e.pointerType === 'mouse') clearHand();
   });
 
   // Dwell 1.5s loop checking if Air-Cursor hovers over any TFT button
@@ -627,4 +651,19 @@ function initBomTable() {
 document.addEventListener('DOMContentLoaded', () => {
   initPonduloSimulator();
   initBomTable();
+
+  // Portrait smartphone advisory banner dismiss (persisted for current session)
+  const tip = document.getElementById('landscape-tip');
+  const btnDismiss = document.getElementById('btn-dismiss-landscape');
+  if (tip) {
+    try {
+      if (sessionStorage.getItem('pondulo_landscape_tip_dismissed') === '1') {
+        tip.classList.add('dismissed');
+      }
+    } catch { /* ignore */ }
+    btnDismiss?.addEventListener('click', () => {
+      tip.classList.add('dismissed');
+      try { sessionStorage.setItem('pondulo_landscape_tip_dismissed', '1'); } catch { /* ignore */ }
+    });
+  }
 });

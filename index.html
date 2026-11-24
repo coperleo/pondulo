@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
-  <link rel="stylesheet" href="css/style.css?v=13" />
+  <link rel="stylesheet" href="css/style.css?v=14" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -64,11 +64,23 @@
     <div class="viewport-sticky" id="viewport-sticky">
       <canvas id="pondulo-canvas"></canvas>
 
+      <!-- Portrait Smartphone Advisory Banner (only visible on vertical phones, auto-hides in landscape) -->
+      <div class="landscape-tip" id="landscape-tip" role="status" aria-live="polite">
+        <div class="landscape-tip-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </div>
+        <div class="landscape-tip-copy">
+          <strong data-i18n="mobile_tip_title">Meglio in orizzontale</strong>
+          <span data-i18n="mobile_tip_desc">Per la migliore esperienza 3D si consiglia uno schermo orizzontale (ruota il telefono o apri da PC).</span>
+        </div>
+        <button type="button" class="landscape-tip-close" id="btn-dismiss-landscape" aria-label="Chiudi avviso" data-i18n="mobile_tip_ok">OK</button>
+      </div>
+
       <!-- Loading Overlay -->
       <div class="loader-overlay" id="loader-overlay">
         <img src="assets/media/pondulo_icon.png" alt="PONDULO" class="loader-logo" />
         <div class="loader-ring"></div>
-        <p class="loader-text">CARICAMENTO MODELLO 3D CAD · 2.8 MB</p>
+        <p class="loader-text">CARICAMENTO MODELLO 3D CAD…</p>
       </div>
 
       <!-- Subtle Telemetry Corner HUD -->
@@ -1034,8 +1046,8 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=17"></script>
-  <script type="module" src="js/features.js?v=5"></script>
-  <script type="module" src="js/i18n.js?v=3"></script>
+  <script type="module" src="js/app.js?v=18"></script>
+  <script type="module" src="js/features.js?v=6"></script>
+  <script type="module" src="js/i18n.js?v=4"></script>
 </body>
 </html>

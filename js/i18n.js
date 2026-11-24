@@ -41,6 +41,9 @@ const I18N_DICT = {
     bom_th_bus: 'Bus / Pinout',
     bom_th_ds: 'Docs',
     bom_pack_lbl: 'Quick Tech Pack:',
+    mobile_tip_title: 'Best viewed in landscape',
+    mobile_tip_desc: 'For the best 3D interactive experience, rotate your phone horizontally or view on a wider screen.',
+    mobile_tip_ok: 'Got it',
   },
 };
 
@@ -114,7 +117,7 @@ function initLanguageSwitcher() {
   function applyLang(lang) {
     window.ponduloLang = lang;
     document.documentElement.lang = lang;
-    localStorage.setItem('pondulo_lang', lang);
+    try { localStorage.setItem('pondulo_lang', lang); } catch { /* private mode */ }
     btn.textContent = lang === 'en' ? '🇬🇧 EN' : '🇮🇹 IT';
 
     document.querySelectorAll('[data-i18n]').forEach((el) => {
@@ -140,7 +143,8 @@ function initLanguageSwitcher() {
     applyLang(window.ponduloLang === 'en' ? 'it' : 'en');
   });
 
-  const saved = localStorage.getItem('pondulo_lang');
+  let saved = null;
+  try { saved = localStorage.getItem('pondulo_lang'); } catch { /* private mode */ }
   if (saved === 'en') applyLang('en');
   else window.ponduloLang = 'it';
 }

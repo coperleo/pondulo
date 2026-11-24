@@ -1102,7 +1102,7 @@ window.ponduloLiveSim = {
 
 const loader = new GLTFLoader();
 if (renderer) loader.load(
-  'assets/pondulo.glb?v=6',
+  'assets/pondulo.glb?v=7',
   (gltf) => {
     ponduloRoot = gltf.scene;
     scene.add(ponduloRoot);

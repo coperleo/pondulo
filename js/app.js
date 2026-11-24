@@ -2059,65 +2059,109 @@ function applyRigState(elapsed) {
   if (cartoonHand) {
     cartoonHand.visible = bi > 0.15;
     if (cartoonHand.visible) {
-      const { hand, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat } = cartoonHand.userData;
-      const cyc = elapsed % 9.0;
-      if (cyc < 5.2) {
-        // Phase A: Chubby 3D hand points index finger directly at VL53L7CX -> glides cursor to STAMPA -> 1.5s Dwell!
-        tipRing.visible = true;
-        swipeTrailMat.opacity = 0;
-        if (cyc < 2.2) {
-          const p = cyc / 2.2;
-          const ease = 0.5 - 0.5 * Math.cos(p * Math.PI);
-          const hx = -0.22 + ease * 0.42;
-          const hy = 0.12 - ease * 0.24;
-          hand.position.set(hx, hy, 0);
-          hand.rotation.set(0.12 - hy * 0.35, -hx * 0.35, -hx * 0.18);
-          spotMesh.position.set(-0.12 + hx * 0.85, 0.02 + hy * 0.85, -0.64);
-          tipRingMat.opacity = 0.75;
-          spotMat.opacity = 0.75;
-          gestureTft = { mode: 'food', cursorX: 0.24 + ease * 0.52, cursorY: 0.44 + ease * 0.36, dwell: 0, flash: 0 };
-        } else if (cyc < 4.2) {
-          // Hold steady over STAMPA: Dwell fills 0 -> 100%!
-          const dp = (cyc - 2.2) / 2.0;
-          hand.position.set(0.20, -0.12, -0.06 * Math.sin(dp * Math.PI));
-          hand.rotation.set(0.16, -0.08, -0.04);
-          spotMesh.position.set(0.05, -0.08, -0.64);
-          tipRingMat.opacity = 0.96;
-          spotMat.opacity = 0.95;
-          gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: dp, flash: 0 };
-        } else {
-          // Green confirmation flash!
-          hand.position.set(0.20, -0.12, 0.04);
-          tipRingMat.opacity = 1.0;
-          gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: 1.0, flash: 1.0 };
-        }
+      const ud = cartoonHand.userData;
+      const { hand, tipRing, tipRingMat, swipeTrailMat, spotMesh, spotMat } = ud;
+      const smooth = (t) => {
+        const c = THREE.MathUtils.clamp(t, 0, 1);
+        return c * c * (3 - 2 * c);
+      };
+
+      // Continuous closed 10.4s loop — ZERO teleports, C1-smooth transitions everywhere!
+      const cyc = elapsed % 10.4;
+      let tx = -0.22, ty = 0.10, tz = 0.0;
+      let rx = 0.08, ry = 0.08, rz = 0.04;
+      let targetTrail = 0, targetTipOp = 0.8, targetSpotOp = 0.78;
+      let showTip = true;
+
+      if (cyc < 2.3) {
+        // 1. Glide index finger smoothly to STAMPA button
+        const e = smooth(cyc / 2.3);
+        tx = THREE.MathUtils.lerp(-0.22, 0.18, e);
+        ty = THREE.MathUtils.lerp(0.10, -0.10, e);
+        tz = Math.sin(e * Math.PI) * -0.04;
+        rx = THREE.MathUtils.lerp(0.06, 0.14, e);
+        ry = THREE.MathUtils.lerp(0.10, -0.08, e);
+        rz = THREE.MathUtils.lerp(0.05, -0.04, e);
+        gestureTft = { mode: 'food', cursorX: 0.24 + e * 0.52, cursorY: 0.44 + e * 0.36, dwell: 0, flash: 0 };
+      } else if (cyc < 4.1) {
+        // 2. Steady natural hover over STAMPA while Dwell fills 0 -> 100%
+        const dp = (cyc - 2.3) / 1.8;
+        tx = 0.18 + Math.sin(elapsed * 2.1) * 0.006;
+        ty = -0.10 + Math.cos(elapsed * 1.9) * 0.006;
+        tz = -0.03 * Math.sin(dp * Math.PI);
+        rx = 0.14; ry = -0.08; rz = -0.04;
+        targetTipOp = 0.96; targetSpotOp = 0.94;
+        gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: dp, flash: 0 };
+      } else if (cyc < 4.9) {
+        // 3. Soft confirmation tap + green OK flash
+        const fp = (cyc - 4.1) / 0.8;
+        tx = 0.18;
+        ty = -0.10;
+        tz = Math.sin(fp * Math.PI) * 0.05;
+        rx = 0.12; ry = -0.06; rz = -0.03;
+        targetTipOp = 1.0;
+        gestureTft = { mode: 'food', cursorX: 0.76, cursorY: 0.80, dwell: 1.0, flash: 1.0 };
+      } else if (cyc < 6.1) {
+        // 4. Smooth natural reposition (retract slightly + glide to left start of swipe — ZERO teleport!)
+        const e = smooth((cyc - 4.9) / 1.2);
+        tx = THREE.MathUtils.lerp(0.18, -0.30, e);
+        ty = THREE.MathUtils.lerp(-0.10, 0.02, e);
+        tz = Math.sin(e * Math.PI) * 0.12;
+        rx = THREE.MathUtils.lerp(0.12, 0.06, e);
+        ry = THREE.MathUtils.lerp(-0.06, 0.20, e);
+        rz = THREE.MathUtils.lerp(-0.03, -0.18, e);
+        targetTipOp = 0.4; targetSpotOp = 0.4;
+        gestureTft = { mode: 'food', cursorX: THREE.MathUtils.lerp(0.76, 0.18, e), cursorY: THREE.MathUtils.lerp(0.80, 0.52, e), dwell: 0, flash: 0 };
+      } else if (cyc < 7.4) {
+        // 5. Silky horizontal Left -> Right Air-Swipe switching Macelleria -> Clinico!
+        const e = smooth((cyc - 6.1) / 1.3);
+        tx = THREE.MathUtils.lerp(-0.30, 0.30, e);
+        ty = 0.02 + Math.sin(e * Math.PI) * 0.09;
+        tz = -0.04 * Math.sin(e * Math.PI);
+        rx = 0.06;
+        ry = THREE.MathUtils.lerp(0.20, -0.20, e);
+        rz = THREE.MathUtils.lerp(-0.18, 0.18, e);
+        showTip = false;
+        targetTrail = Math.sin(e * Math.PI) * 0.82;
+        gestureTft = { mode: e > 0.52 ? 'clinical' : 'food', cursorX: 0.18 + e * 0.64, cursorY: 0.52, dwell: 0, flash: 0 };
+      } else if (cyc < 9.0) {
+        // 6. Calm breathing float while Clinical screen is displayed
+        const h = (cyc - 7.4) / 1.6;
+        tx = 0.30 + Math.sin(h * Math.PI) * 0.015;
+        ty = 0.02 + Math.sin(elapsed * 2.0) * 0.012;
+        tz = 0.03;
+        rx = 0.06; ry = -0.16; rz = 0.12;
+        showTip = false;
+        targetTrail = 0.08;
+        gestureTft = { mode: 'clinical', cursorX: 0.82, cursorY: 0.52, dwell: 0, flash: 0 };
       } else {
-        // Phase B: Smooth horizontal Air-Swipe across the ToF matrix switching Macelleria -> Clinico!
-        tipRing.visible = false;
-        const sp = (cyc - 5.2) / 3.8;
-        if (sp < 0.38) {
-          const t = sp / 0.38;
-          const ease = 0.5 - 0.5 * Math.cos(t * Math.PI);
-          const sx = -0.34 + ease * 0.68;
-          hand.position.set(sx, Math.sin(t * Math.PI) * 0.10, -0.04);
-          hand.rotation.set(0.08, 0.25 - ease * 0.5, -0.25 + ease * 0.5);
-          swipeTrailMat.opacity = Math.sin(t * Math.PI) * 0.84;
-          spotMesh.position.set(-0.10 + sx * 0.8, 0.02 + Math.sin(t * Math.PI) * 0.08, -0.64);
-          gestureTft = { mode: t > 0.55 ? 'clinical' : 'food', cursorX: 0.15 + ease * 0.70, cursorY: 0.52, dwell: 0, flash: 0 };
-        } else if (sp < 0.78) {
-          hand.position.set(0.32, 0.02, 0.04);
-          hand.rotation.set(0.06, -0.18, 0.12);
-          swipeTrailMat.opacity = 0.12;
-          gestureTft = { mode: 'clinical', cursorX: 0.78, cursorY: 0.52, dwell: 0, flash: 0 };
-        } else {
-          const t = (sp - 0.78) / 0.22;
-          const sx = 0.32 - t * 0.54;
-          hand.position.set(sx, Math.sin(t * Math.PI) * 0.08, 0);
-          hand.rotation.set(0.08, -0.15 + t * 0.3, 0.12 - t * 0.28);
-          swipeTrailMat.opacity = Math.sin(t * Math.PI) * 0.6;
-          gestureTft = { mode: t > 0.5 ? 'food' : 'clinical', cursorX: 0.78 - t * 0.52, cursorY: 0.50, dwell: 0, flash: 0 };
-        }
+        // 7. Smooth return Right -> Left glide back to exact start (-0.22, +0.10) — seamless closed loop!
+        const e = smooth((cyc - 9.0) / 1.4);
+        tx = THREE.MathUtils.lerp(0.30, -0.22, e);
+        ty = THREE.MathUtils.lerp(0.02, 0.10, e) + Math.sin(e * Math.PI) * 0.06;
+        tz = Math.sin(e * Math.PI) * 0.04;
+        rx = THREE.MathUtils.lerp(0.06, 0.06, e);
+        ry = THREE.MathUtils.lerp(-0.16, 0.10, e);
+        rz = THREE.MathUtils.lerp(0.12, 0.05, e);
+        targetTrail = Math.sin(e * Math.PI) * 0.55;
+        gestureTft = { mode: e > 0.5 ? 'food' : 'clinical', cursorX: THREE.MathUtils.lerp(0.82, 0.24, e), cursorY: THREE.MathUtils.lerp(0.52, 0.44, e), dwell: 0, flash: 0 };
       }
+
+      // Exponential critically-damped smoothing (buttery Pixar-like follow-through!)
+      const k = 0.11;
+      hand.position.x = THREE.MathUtils.lerp(hand.position.x, tx, k);
+      hand.position.y = THREE.MathUtils.lerp(hand.position.y, ty, k);
+      hand.position.z = THREE.MathUtils.lerp(hand.position.z, tz, k);
+      hand.rotation.x = THREE.MathUtils.lerp(hand.rotation.x, rx, k);
+      hand.rotation.y = THREE.MathUtils.lerp(hand.rotation.y, ry, k);
+      hand.rotation.z = THREE.MathUtils.lerp(hand.rotation.z, rz, k);
+
+      spotMesh.position.x = THREE.MathUtils.lerp(spotMesh.position.x, -0.12 + hand.position.x * 0.85, 0.16);
+      spotMesh.position.y = THREE.MathUtils.lerp(spotMesh.position.y, 0.02 + hand.position.y * 0.85, 0.16);
+      tipRing.visible = showTip;
+      tipRingMat.opacity = THREE.MathUtils.lerp(tipRingMat.opacity, showTip ? targetTipOp : 0, 0.14);
+      spotMat.opacity = THREE.MathUtils.lerp(spotMat.opacity, targetSpotOp, 0.14);
+      swipeTrailMat.opacity = THREE.MathUtils.lerp(swipeTrailMat.opacity, targetTrail, 0.14);
     }
   }
 

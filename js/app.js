@@ -1531,7 +1531,7 @@ function setupScrollChoreography() {
     modelRotY: -0.22,
     headTiltDeg: -6,
     beamIntensity: 1.0,
-    duration: 0.95,
+    duration: 0.72,
     ease: 'power2.inOut',
   })
   .to(state, {
@@ -1542,7 +1542,7 @@ function setupScrollChoreography() {
     targetY: 2.55,
     targetZ: 0.35,
     modelRotY: -0.06,
-    duration: 0.65,
+    duration: 0.43,
     ease: 'sine.inOut',
   })
 
@@ -1610,35 +1610,35 @@ function setupScrollChoreography() {
     ease: 'power2.inOut',
   })
 
-  // 07 -> 08: SPOTLIGHT REAR-LEFT (MP3 YX5300 + ESP8266 Wi-Fi) — PONDULO rotates to show the open rear-left!
+  // 07 -> 08: SPOTLIGHT REAR-LEFT (MP3 YX5300 + ESP8266 Wi-Fi) — smooth single turn to open rear-left!
   .to(state, {
     exSchedaC: 0.15,
     exAudioIot: 1.0,
-    camX: isMobile ? 3.4 : 4.2,
+    camX: isMobile ? 3.2 : 3.8,
     camY: 3.05,
     camZ: isMobile ? 6.6 : 5.7,
     targetX: isMobile ? 0.0 : 0.55,
     targetY: 2.55,
-    modelRotY: 2.25, // Rotated to rear-left so MP3 + ESP8266 project toward viewer!
-    duration: 1.2,
-    ease: 'power2.inOut',
-  })
-
-  // 08 -> 09: SPOTLIGHT REAR-RIGHT (LM2596 Buck Converter 12V->5V) — rotates to rear-right!
-  .to(state, {
-    exAudioIot: 0.15,
-    exPower: 1.0,
-    camX: isMobile ? -3.4 : -4.2,
-    camY: 2.70,
-    camZ: isMobile ? 6.4 : 5.5,
-    targetX: isMobile ? 0.0 : -0.55,
-    targetY: 2.15,
-    modelRotY: -2.25, // Rotated to rear-right so Buck Converter faces viewer!
+    modelRotY: 2.35, // Smooth continuous rotation to rear-left
     duration: 1.15,
     ease: 'power2.inOut',
   })
 
-  // 09 -> 10: SPOTLIGHT BASE (Weighing Plate, Load Cell, HX711, Audio Amp & Speaker)
+  // 08 -> 09: SPOTLIGHT REAR-RIGHT (LM2596 Buck Converter 12V->5V) — continues smoothly across rear (+96°, ZERO whip-back!)
+  .to(state, {
+    exAudioIot: 0.15,
+    exPower: 1.0,
+    camX: isMobile ? -2.8 : -3.4,
+    camY: 2.70,
+    camZ: isMobile ? 6.4 : 5.6,
+    targetX: isMobile ? 0.0 : -0.55,
+    targetY: 2.15,
+    modelRotY: 4.03, // Equivalent to -2.25 + 2π: shortest smooth arc across the back!
+    duration: 1.15,
+    ease: 'power2.inOut',
+  })
+
+  // 09 -> 10: SPOTLIGHT BASE (Weighing Plate, Load Cell, HX711, Audio Amp & Speaker) — completes smooth 360° orbit!
   .to(state, {
     exShell: 0.0,
     exSchedaA: 0.0,
@@ -1653,7 +1653,7 @@ function setupScrollChoreography() {
     camZ: isMobile ? 6.4 : 5.4,
     targetX: isMobile ? 0.0 : 0.65,
     targetY: 0.52,
-    modelRotY: 0.42,
+    modelRotY: 6.70, // Equivalent to +0.42 + 2π: smooth forward completion
     duration: 1.25,
     ease: 'power2.inOut',
   })
@@ -1673,7 +1673,7 @@ function setupScrollChoreography() {
     camZ: isMobile ? 9.4 : 8.2,
     targetX: 0.0,
     targetY: 1.95,
-    modelRotY: -0.45,
+    modelRotY: 5.83, // Equivalent to -0.45 + 2π
     duration: 1.3,
     ease: 'power2.inOut',
   })
@@ -1685,7 +1685,7 @@ function setupScrollChoreography() {
     camZ: isMobile ? 9.0 : 8.2,
     targetX: isMobile ? 0.0 : -0.95,
     targetY: 1.85,
-    modelRotY: 0.28,
+    modelRotY: 6.56, // Equivalent to +0.28 + 2π
     duration: 1.15,
     ease: 'sine.inOut',
   });

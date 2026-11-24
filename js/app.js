@@ -276,7 +276,7 @@ const CHAPTER_PINS = [
 
 // Which card side is occupied in each chapter so pins avoid overlapping the narrative card!
 const CHAPTER_CARD_SIDE = [
-  'left', 'right', 'left', 'right',
+  'left', 'right', 'right', 'right',
   'left', 'right', 'left', 'right',
   'left', 'right', 'top', 'left',
 ];
@@ -512,8 +512,8 @@ function createCartoonHandGroup() {
   handLoader.load('assets/cartoon_hand.glb?v=2', (gltf) => {
     const model = gltf.scene;
     model.scale.setScalar(1.52);
-    // Natural ergonomic angle approaching slightly from lower-right so index & fingers read clearly in 3/4 view!
-    model.rotation.set(0.18, 0.28, -0.14);
+    // Natural ergonomic angle with thumb & index finger clearly turned toward the LEFT viewer camera!
+    model.rotation.set(0.14, -0.14, 0.08);
     model.traverse((o) => {
       if (o.isMesh) {
         o.castShadow = true;
@@ -1519,29 +1519,29 @@ function setupScrollChoreography() {
     ease: 'sine.inOut',
   })
 
-  // 02 -> 03: Cinematic 3/4 Side-Front Perspective showing BOTH the chubby 3D cartoon hand gesturing in profile
-  //           inside the glowing 8x8 ToF laser cone AND the live animated TFT cursor/Dwell/Swipe!
+  // 02 -> 03: Cinematic LEFT 3/4 Perspective showing BOTH the TFT screen in foreground
+  //           AND the thumb + pointing index side of the chubby 3D cartoon hand gesturing in the 8x8 ToF cone!
   .to(state, {
-    camX: isMobile ? 3.5 : 4.55,
-    camY: 2.95,
-    camZ: isMobile ? 4.1 : 3.25,
-    targetX: isMobile ? 0.15 : -0.18,
-    targetY: 2.58,
-    targetZ: 0.45,
-    modelRotY: 0.24,
+    camX: isMobile ? -3.4 : -4.35,
+    camY: 2.88,
+    camZ: isMobile ? 4.3 : 3.45,
+    targetX: isMobile ? 0.1 : 0.65,
+    targetY: 2.56,
+    targetZ: 0.42,
+    modelRotY: -0.22,
     headTiltDeg: -6,
     beamIntensity: 1.0,
     duration: 0.95,
     ease: 'power2.inOut',
   })
   .to(state, {
-    camX: isMobile ? 2.5 : 3.45,
-    camY: 3.08,
-    camZ: isMobile ? 4.7 : 4.05,
-    targetX: isMobile ? 0.1 : -0.22,
-    targetY: 2.56,
+    camX: isMobile ? -2.6 : -3.35,
+    camY: 3.02,
+    camZ: isMobile ? 4.8 : 4.15,
+    targetX: isMobile ? 0.08 : 0.58,
+    targetY: 2.55,
     targetZ: 0.35,
-    modelRotY: 0.06,
+    modelRotY: -0.06,
     duration: 0.65,
     ease: 'sine.inOut',
   })

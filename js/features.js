@@ -561,7 +561,6 @@ const BOM_ITEMS = [
 
 function initBomTable() {
   const tbody = document.getElementById('bom-tbody');
-  const totalEl = document.getElementById('bom-total-est');
   const countEl = document.getElementById('bom-count-est');
   if (!tbody) return;
 
@@ -570,11 +569,8 @@ function initBomTable() {
   function render() {
     const isEn = window.ponduloLang === 'en';
     const filtered = activeCat === 'all' ? BOM_ITEMS : BOM_ITEMS.filter((i) => i.cat === activeCat);
-    let totalCost = 0;
     let totalPieces = 0;
     tbody.innerHTML = filtered.map((item) => {
-      const sub = item.qty * item.unitEur;
-      totalCost += sub;
       totalPieces += item.qty;
       const ext = item.dsUrl.startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : '';
       return `
@@ -583,12 +579,10 @@ function initBomTable() {
           <td class="bom-num">${item.qty}×</td>
           <td>${isEn ? item.roleEn : item.roleIt}</td>
           <td><code>${item.bus}</code></td>
-          <td class="bom-num">~€${sub.toFixed(0)}</td>
           <td><a href="${item.dsUrl}" class="bom-ds-link"${ext}>${item.dsLabel} ↗</a></td>
         </tr>
       `;
     }).join('');
-    if (totalEl) totalEl.textContent = `~€${totalCost.toFixed(0)}`;
     if (countEl) countEl.textContent = `${totalPieces} ${isEn ? 'pcs' : 'pz'}`;
   }
 

@@ -199,7 +199,7 @@
       </article>
 
       <!-- 03 · TOF 8x8 LASER CONE -->
-      <article class="chapter chapter-left" id="chapter-tof" data-chapter="2">
+      <article class="chapter chapter-right" id="chapter-tof" data-chapter="2">
         <div class="chapter-card">
           <span class="step-num">03 / 12 · INTERAZIONE SPAZIALE LASER</span>
           <h2>64 fasci infrarossi. Zero tocco.</h2>
@@ -579,26 +579,26 @@
           </div>
         </div>
 
-        <!-- Interactive Zoomable Fritzing Wiring Diagram -->
+        <!-- Interactive Zoomable Wiring Diagram -->
         <div class="schematic-card">
           <div class="schematic-bar">
             <div class="schematic-title">
               <span class="schematic-dot"></span>
-              <span>SCHEMA CABLAGGI COMPLETI · STILE FRITZING (2640×1780 HD)</span>
+              <span>SCHEMA CABLAGGI COMPLETI · ALTA RISOLUZIONE (2640×1780 HD)</span>
             </div>
             <div class="schematic-actions">
               <button type="button" class="schematic-btn" id="btn-open-schematic" aria-label="Ingrandisci schema cablaggi">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
                 Ingrandisci
               </button>
-              <a href="assets/media/pondulo_schema_fritzing.png" download="PONDULO_Schema_Collegamenti_Fritzing.png" class="schematic-btn schematic-btn-dl" aria-label="Scarica schema PNG HD">
+              <a href="assets/media/pondulo_schema_fritzing.png" download="PONDULO_Schema_Collegamenti_HD.png" class="schematic-btn schematic-btn-dl" aria-label="Scarica schema PNG HD">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Scarica PNG
               </a>
             </div>
           </div>
           <div class="schematic-preview" id="schematic-preview" role="button" tabindex="0" aria-label="Apri schema collegamenti a schermo intero">
-            <img src="assets/media/pondulo_schema_fritzing.png" alt="Schema elettrico stile Fritzing di tutti i collegamenti di PONDULO: 3x STM32 NUCLEO-G474RE, VL53L7CX, ILI9341, YX5300 con cavo AUX, amplificatore audio, altoparlante, HX711, cella di carico, ESP8266 e LM2596" loading="lazy" />
+            <img src="assets/media/pondulo_schema_fritzing.png" alt="Schema elettrico completo di tutti i collegamenti di PONDULO: 3x STM32 NUCLEO-G474RE, VL53L7CX, ILI9341, YX5300 con cavo AUX, amplificatore audio, altoparlante, HX711, cella di carico, ESP8266 e LM2596" loading="lazy" />
             <span class="schematic-zoom-hint">Clicca sullo schema per ingrandire e fare zoom 🔍</span>
           </div>
         </div>
@@ -662,8 +662,7 @@
               <h3 data-i18n="bom_title">Scheda BOM Completa &amp; Datasheet Ufficiali</h3>
             </div>
             <div class="bom-summary">
-              <span id="bom-count-est">13 pz</span>
-              <strong id="bom-total-est">~€157</strong>
+              <strong id="bom-count-est">13 pz</strong>
             </div>
           </div>
           <div class="bom-filters" role="tablist">
@@ -681,7 +680,6 @@
                   <th class="bom-num" data-i18n="bom_th_qty">Q.tà</th>
                   <th data-i18n="bom_th_role">Ruolo nel sistema</th>
                   <th data-i18n="bom_th_bus">Bus / Pinout</th>
-                  <th class="bom-num" data-i18n="bom_th_cost">Stima</th>
                   <th data-i18n="bom_th_ds">Documentazione</th>
                 </tr>
               </thead>
@@ -691,7 +689,7 @@
           <div class="bom-pack-bar">
             <span data-i18n="bom_pack_lbl">Pack Tecnico Rapido:</span>
             <div class="bom-pack-links">
-              <a href="assets/media/pondulo_schema_fritzing.png" download="PONDULO_Schema_Collegamenti_Fritzing.png" class="schematic-btn schematic-btn-dl">⬇ Schema Fritzing HD (PNG)</a>
+              <a href="assets/media/pondulo_schema_fritzing.png" download="PONDULO_Schema_Collegamenti_HD.png" class="schematic-btn schematic-btn-dl">⬇ Schema Cablaggi HD (PNG)</a>
               <a href="https://github.com/EmanuelChirico/Pondulo/blob/main/docs/HARDWARE.md" target="_blank" rel="noopener noreferrer" class="schematic-btn">📄 Pinout HARDWARE.md ↗</a>
               <a href="https://www.vincenzonet.it/pondulo-bilancia-touchless-nisc-2026/" target="_blank" rel="noopener noreferrer" class="schematic-btn">📝 Articolo Portfolio ↗</a>
             </div>
@@ -1000,16 +998,16 @@
     </div>
   </footer>
 
-  <!-- Fullscreen Zoom Lightbox for Fritzing Schematic -->
+  <!-- Fullscreen Zoom Lightbox for Wiring Schematic -->
   <div class="lightbox" id="schematic-lightbox" aria-hidden="true" role="dialog" aria-label="Visualizzatore ingrandito schema cablaggi PONDULO">
     <div class="lightbox-toolbar">
-      <span class="lightbox-title">SCHEMA CABLAGGI PONDULO · FRITZING HD</span>
+      <span class="lightbox-title">SCHEMA CABLAGGI PONDULO · HD</span>
       <div class="lightbox-controls">
         <button type="button" class="schematic-btn" id="lb-zoom-out" aria-label="Riduci zoom">−</button>
         <span class="lb-zoom-val" id="lb-zoom-val">100%</span>
         <button type="button" class="schematic-btn" id="lb-zoom-in" aria-label="Aumenta zoom">+</button>
         <button type="button" class="schematic-btn" id="lb-zoom-reset">Reset</button>
-        <a href="assets/media/pondulo_schema_fritzing.png" download="PONDULO_Schema_Collegamenti_Fritzing.png" class="schematic-btn schematic-btn-dl">
+        <a href="assets/media/pondulo_schema_fritzing.png" download="PONDULO_Schema_Collegamenti_HD.png" class="schematic-btn schematic-btn-dl">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Scarica PNG
         </a>
@@ -1025,8 +1023,8 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=11"></script>
-  <script type="module" src="js/features.js?v=3"></script>
-  <script type="module" src="js/i18n.js?v=2"></script>
+  <script type="module" src="js/app.js?v=12"></script>
+  <script type="module" src="js/features.js?v=4"></script>
+  <script type="module" src="js/i18n.js?v=3"></script>
 </body>
 </html>

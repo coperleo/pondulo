@@ -39,7 +39,6 @@ const I18N_DICT = {
     bom_th_qty: 'Qty',
     bom_th_role: 'System Role',
     bom_th_bus: 'Bus / Pinout',
-    bom_th_cost: 'Est.',
     bom_th_ds: 'Docs',
     bom_pack_lbl: 'Quick Tech Pack:',
   },

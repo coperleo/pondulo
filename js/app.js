@@ -1470,12 +1470,15 @@ function setupScrollChoreography() {
     }
 
     if (scrollTween) scrollTween.kill();
-    const proxy = { y: window.scrollY };
+    const startY = window.scrollY;
+    const dist = Math.abs(targetY - startY);
+    const dur = THREE.MathUtils.clamp(0.48 + dist / 4200, 0.52, 0.95);
+    const proxy = { y: startY };
     scrollTween = gsap.to(proxy, {
       y: targetY,
-      duration: 1.05,
-      ease: 'power2.inOut',
-      onUpdate: () => window.scrollTo(0, proxy.y),
+      duration: dur,
+      ease: 'power3.out',
+      onUpdate: () => window.scrollTo({ top: proxy.y, left: 0, behavior: 'instant' }),
       onComplete: () => {
         scrollTween = null;
         targetChapterIdx = null;

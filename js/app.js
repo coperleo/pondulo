@@ -337,14 +337,15 @@ try {
   }
 }
 
+let maxPixelRatio = isSmallScreenInit ? 1.35 : 1.5;
 if (renderer) {
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isSmallScreenInit ? 1.5 : 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.12;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
 
   canvas?.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
@@ -426,12 +427,18 @@ window.addEventListener('pointerup', (e) => {
   }
 });
 
-// Studio Lighting
+// Studio Lighting (tight shadow frustum focused strictly on PONDULO for sharp, lightweight shadows)
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.4);
 keyLight.position.set(5.0, 8.0, 6.5);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(isSmallScreenInit ? 512 : 1024, isSmallScreenInit ? 512 : 1024);
-keyLight.shadow.bias = -0.0001;
+keyLight.shadow.camera.near = 2.0;
+keyLight.shadow.camera.far = 18.0;
+keyLight.shadow.camera.left = -2.6;
+keyLight.shadow.camera.right = 2.6;
+keyLight.shadow.camera.top = 3.2;
+keyLight.shadow.camera.bottom = -2.2;
+keyLight.shadow.bias = -0.0002;
 keyLight.shadow.normalBias = 0.038;
 scene.add(keyLight);
 
@@ -1054,7 +1061,55 @@ const wireMaterials = [];
 const headXrayEdges = [];
 const baseXrayEdges = [];
 const pinElements = new Map();
+const pinMeta = new Map();
+const localBoundsMap = new Map(); // Precomputed O(1) local Box3 per hotspot (eliminates 70k-vertex loop per frame!)
 const isolateTrackedMeshes = [];
+
+const SHADOW_CASTER_GROUPS = new Set([
+  'head_shell', 'hinge_clamps', 'base_column', 'weighing_plate', 'load_cell', 'audio_amp', 'loudspeaker',
+]);
+
+function computeLocalPartBounds() {
+  if (!ponduloRoot) return;
+  ponduloRoot.updateMatrixWorld(true);
+  const invRoot = new THREE.Matrix4();
+  const relMat = new THREE.Matrix4();
+  const childBox = new THREE.Box3();
+  HOTSPOTS.forEach((h) => {
+    const obj = partMap.get(h.id);
+    if (!obj) return;
+    const box = new THREE.Box3();
+    invRoot.copy(obj.matrixWorld).invert();
+    obj.traverse((c) => {
+      if (c.isMesh && c.geometry) {
+        if (!c.geometry.boundingBox) c.geometry.computeBoundingBox();
+        if (c.geometry.boundingBox) {
+          relMat.multiplyMatrices(invRoot, c.matrixWorld);
+          childBox.copy(c.geometry.boundingBox).applyMatrix4(relMat);
+          box.union(childBox);
+        }
+      }
+    });
+    if (!box.isEmpty()) localBoundsMap.set(h.id, box);
+  });
+}
+
+function prewarmShaders() {
+  if (!renderer || !ponduloRoot) return;
+  try {
+    // 1. Compile standard opaque + transparent wire programs
+    renderer.compile(scene, camera);
+    // 2. Compile translucent X-Ray shell program variant into WebGLPrograms cache so Ch 04 / Ch 11 never hitch!
+    const allShells = [...headShellMeshes, ...baseShellMeshes];
+    allShells.forEach((m) => {
+      if (m.material) { m.material.transparent = true; m.material.needsUpdate = true; }
+    });
+    renderer.compile(scene, camera);
+    allShells.forEach((m) => {
+      if (m.material) { m.material.transparent = false; m.material.needsUpdate = true; }
+    });
+  } catch { /* ignore on constrained WebGL drivers */ }
+}
 
 function attachXrayContour(mesh, targetList) {
   const edgesGeo = new THREE.EdgesGeometry(mesh.geometry, 26);
@@ -1114,10 +1169,11 @@ if (renderer) loader.load(
         origPos.set(obj.name, obj.position.clone());
       }
       if (obj.isMesh) {
-        obj.castShadow = true;
-        obj.receiveShadow = true;
         const ownerName = obj.name || obj.parent?.name || '';
         const parentName = obj.parent?.name || '';
+        const casts = SHADOW_CASTER_GROUPS.has(ownerName) || SHADOW_CASTER_GROUPS.has(parentName);
+        obj.castShadow = casts;
+        obj.receiveShadow = casts;
         const groupId = HOTSPOTS.some((h) => h.id === ownerName) ? ownerName : (HOTSPOTS.some((h) => h.id === parentName) ? parentName : '');
 
         // Clone single-material meshes ONCE if needed so live displays, LEDs & isolate mode NEVER lose material references!
@@ -1178,11 +1234,16 @@ if (renderer) loader.load(
           isolateTrackedMeshes.push({ mesh: obj, groupId, origOpacity: obj.material.opacity ?? 1, origTrans: !!obj.material.transparent });
         }
 
-        // Wiring materials fade gently during wide exploded views
+        // Wiring materials stay pre-flagged transparent so wide exploded views fade smoothly with ZERO shader recompiles!
         if (ownerName === 'wiring_head' || ownerName === 'wiring_base' || parentName === 'wiring_head' || parentName === 'wiring_base') {
           const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
           mats.forEach((m) => {
-            if (m && !wireMaterials.includes(m)) wireMaterials.push(m);
+            if (m && !wireMaterials.includes(m)) {
+              m.transparent = true;
+              m.opacity = 1.0;
+              m.depthWrite = true;
+              wireMaterials.push(m);
+            }
           });
         }
       }
@@ -1204,11 +1265,13 @@ if (renderer) loader.load(
     introStartTime = null;
     introFinished = false;
 
+    computeLocalPartBounds();
     buildHotspotDOM();
     setupScrollChoreography();
     setupInspectorControls();
+    prewarmShaders();
 
-    setTimeout(() => loaderOverlay.classList.add('hidden'), 220);
+    setTimeout(() => loaderOverlay.classList.add('hidden'), 180);
   },
   undefined,
   (err) => {
@@ -1230,8 +1293,23 @@ const drawerDesc = document.getElementById('drawer-desc');
 const drawerSpecs = document.getElementById('drawer-specs');
 let activeHotspotId = null;
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function measurePinDimensions() {
+  pinMeta.forEach((meta) => {
+    const w = meta.btn.offsetWidth;
+    const h = meta.btn.offsetHeight;
+    if (w > 0) meta.pw = Math.max(w, 130);
+    if (h > 0) meta.ph = Math.max(h, 30);
+  });
+}
+
 function buildHotspotDOM() {
   hotspotsLayer.innerHTML = '';
+  leadersSvg.innerHTML = '';
+  pinElements.clear();
+  pinMeta.clear();
+
   HOTSPOTS.forEach((h) => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -1246,7 +1324,34 @@ function buildHotspotDOM() {
     });
     hotspotsLayer.appendChild(btn);
     pinElements.set(h.id, btn);
+
+    const accent = h.group === 'base' ? 'accent-cyan' : 'accent-red';
+    const svgLine = document.createElementNS(SVG_NS, 'polyline');
+    svgLine.setAttribute('class', `leader-line ${accent}`);
+    svgLine.style.display = 'none';
+    leadersSvg.appendChild(svgLine);
+
+    const svgDot = document.createElementNS(SVG_NS, 'circle');
+    svgDot.setAttribute('class', `leader-dot ${accent}`);
+    svgDot.setAttribute('r', '3.8');
+    svgDot.style.display = 'none';
+    leadersSvg.appendChild(svgDot);
+
+    pinMeta.set(h.id, {
+      btn,
+      svgLine,
+      svgDot,
+      pw: Math.max(h.label.length * 7.5 + 48, 136),
+      ph: 30,
+      lastX: -9999,
+      lastY: -9999,
+      lastPts: '',
+      vis: false,
+      spot: false,
+    });
   });
+
+  requestAnimationFrame(measurePinDimensions);
 }
 
 function openDrawer(h) {
@@ -1334,17 +1439,19 @@ function updateHotspotPositions() {
     visibleIds = CHAPTER_PINS[state.activeChapter] || [];
   }
 
-  // Fast-path: avoid rebuilding empty SVG / touching DOM at 60 FPS when no pins are visible!
+  // Fast-path: avoid touching DOM at 60 FPS when no pins are visible!
   if (visibleIds.length === 0) {
     if (!updateHotspotPositions._wasEmpty) {
-      HOTSPOTS.forEach((item) => {
-        const el = pinElements.get(item.id);
-        if (el) {
-          el.classList.remove('visible', 'spotlight');
-          el.classList.add('hidden-pin');
+      pinMeta.forEach((meta) => {
+        if (meta.vis) {
+          meta.btn.classList.remove('visible', 'spotlight');
+          meta.btn.classList.add('hidden-pin');
+          meta.svgLine.style.display = 'none';
+          meta.svgDot.style.display = 'none';
+          meta.vis = false;
+          meta.spot = false;
         }
       });
-      leadersSvg.innerHTML = '';
       updateHotspotPositions._wasEmpty = true;
     }
     return;
@@ -1369,23 +1476,37 @@ function updateHotspotPositions() {
   const viewCenterY = (minY + maxY) * 0.5;
 
   HOTSPOTS.forEach((item) => {
-    const el = pinElements.get(item.id);
+    const meta = pinMeta.get(item.id);
     const obj = partMap.get(item.id);
-    if (!el || !obj) return;
+    const localBox = localBoundsMap.get(item.id);
+    if (!meta || !obj || !localBox) return;
 
     if (!visibleSet.has(item.id)) {
-      el.classList.remove('visible', 'spotlight');
-      el.classList.add('hidden-pin');
+      if (meta.vis) {
+        meta.btn.classList.remove('visible', 'spotlight');
+        meta.btn.classList.add('hidden-pin');
+        meta.svgLine.style.display = 'none';
+        meta.svgDot.style.display = 'none';
+        meta.vis = false;
+        meta.spot = false;
+      }
       return;
     }
 
-    tmpBox.setFromObject(obj);
+    // O(1) rigid world AABB from precomputed local Box3 (8 corners vs 70,000 vertices!)
+    tmpBox.copy(localBox).applyMatrix4(obj.matrixWorld);
     tmpBox.getCenter(tmpVec);
     tmpVec.project(camera);
 
     if (tmpVec.z <= -1 || tmpVec.z >= 1) {
-      el.classList.remove('visible', 'spotlight');
-      el.classList.add('hidden-pin');
+      if (meta.vis) {
+        meta.btn.classList.remove('visible', 'spotlight');
+        meta.btn.classList.add('hidden-pin');
+        meta.svgLine.style.display = 'none';
+        meta.svgDot.style.display = 'none';
+        meta.vis = false;
+        meta.spot = false;
+      }
       return;
     }
 
@@ -1393,10 +1514,8 @@ function updateHotspotPositions() {
     const ay = (-tmpVec.y * 0.5 + 0.5) * h;
     const sbox = projectBoxToScreen(tmpBox, w, h);
 
-    const pw = Math.max(el.offsetWidth || 152, 130);
-    const ph = Math.max(el.offsetHeight || 30, 30);
-    const hw = pw * 0.5 + 8;
-    const hh = ph * 0.5 + 6;
+    const hw = meta.pw * 0.5 + 8;
+    const hh = meta.ph * 0.5 + 6;
 
     // Store component's screen bounding box (clamped to sane size) so labels never sit on top of it
     const cCx = (sbox.sxMin + sbox.sxMax) * 0.5;
@@ -1406,13 +1525,12 @@ function updateHotspotPositions() {
     componentBoxes.push({ cx: cCx, cy: cCy, hw: cHw, hh: cHh });
 
     // Place pill OUTSIDE the component's silhouette!
-    // Choose cleanest direction: to the right/left side or above/below the component
     const margin = 22;
     const candidates = [
-      { x: sbox.sxMax + hw + margin, y: ay, bias: (ax >= viewCenterX ? 0 : 120) },  // Right of component
-      { x: sbox.sxMin - hw - margin, y: ay, bias: (ax < viewCenterX ? 0 : 120) },   // Left of component
-      { x: ax, y: sbox.syMin - hh - margin, bias: (ay <= viewCenterY ? 10 : 90) },  // Above component
-      { x: ax, y: sbox.syMax + hh + margin, bias: (ay > viewCenterY ? 10 : 110) },  // Below component
+      { x: sbox.sxMax + hw + margin, y: ay, bias: (ax >= viewCenterX ? 0 : 120) },
+      { x: sbox.sxMin - hw - margin, y: ay, bias: (ax < viewCenterX ? 0 : 120) },
+      { x: ax, y: sbox.syMin - hh - margin, bias: (ay <= viewCenterY ? 10 : 90) },
+      { x: ax, y: sbox.syMax + hh + margin, bias: (ay > viewCenterY ? 10 : 110) },
     ];
 
     let best = candidates[0];
@@ -1421,7 +1539,6 @@ function updateHotspotPositions() {
       const cx = THREE.MathUtils.clamp(c.x, minX, maxX);
       const cy = THREE.MathUtils.clamp(c.y, minY, maxY);
       const clampPenalty = (Math.abs(cx - c.x) + Math.abs(cy - c.y)) * 4.0;
-      // Penalize if clamping pushed the candidate back on top of its own component box
       const overlapX = Math.max(0, (hw + cHw) - Math.abs(cx - cCx));
       const overlapY = Math.max(0, (hh + cHh) - Math.abs(cy - cCy));
       const selfOverlapPenalty = (overlapX > 0 && overlapY > 0) ? 1000 : 0;
@@ -1432,12 +1549,11 @@ function updateHotspotPositions() {
       }
     }
 
-    placed.push({ item, el, ax, ay, lx: best.x, ly: best.y, hw, hh });
+    placed.push({ item, meta, ax, ay, lx: best.x, ly: best.y, hw, hh });
   });
 
-  // Iterative 2D repulsion solver: keeps pills separated from EACH OTHER and from active 3D components!
-  for (let iter = 0; iter < 18; iter++) {
-    // 1. Pill vs Pill
+  // Iterative 2D repulsion solver (10 iterations is plenty & ultra-fast)
+  for (let iter = 0; iter < 10; iter++) {
     for (let i = 0; i < placed.length; i++) {
       for (let j = i + 1; j < placed.length; j++) {
         const a = placed[i];
@@ -1462,7 +1578,6 @@ function updateHotspotPositions() {
       }
     }
 
-    // 2. Pill vs Component silhouette (only in focused views <= 5 pins so labels stay crystal clear of boards!)
     if (placed.length <= 5) {
       for (let i = 0; i < placed.length; i++) {
         const p = placed[i];
@@ -1484,24 +1599,44 @@ function updateHotspotPositions() {
     }
   }
 
-  // Render pills + crisp SVG elbow leader lines from exact 3D anchor dot -> pill edge!
-  let svgMarkup = '';
-  placed.forEach((p) => {
-    p.el.style.transform = `translate(-50%, -50%) translate3d(${p.lx.toFixed(1)}px, ${p.ly.toFixed(1)}px, 0)`;
-    p.el.classList.remove('hidden-pin');
-    p.el.classList.add('visible');
-    p.el.classList.toggle('spotlight', isSpotlight);
+  // Zero-innerHTML persistent DOM/SVG update (only mutates when moved > 0.12px!)
+  for (let i = 0; i < placed.length; i++) {
+    const p = placed[i];
+    const m = p.meta;
+    if (!m.vis) {
+      m.btn.classList.remove('hidden-pin');
+      m.btn.classList.add('visible');
+      m.svgDot.style.display = '';
+      m.vis = true;
+    }
+    if (m.spot !== isSpotlight) {
+      m.btn.classList.toggle('spotlight', isSpotlight);
+      m.spot = isSpotlight;
+    }
+    if (Math.abs(p.lx - m.lastX) > 0.12 || Math.abs(p.ly - m.lastY) > 0.12) {
+      m.btn.style.transform = `translate(-50%, -50%) translate3d(${p.lx.toFixed(1)}px, ${p.ly.toFixed(1)}px, 0)`;
+      m.lastX = p.lx;
+      m.lastY = p.ly;
+    }
 
-    const accent = p.item.group === 'base' ? 'accent-cyan' : 'accent-red';
     const edgeX = p.lx + (p.ax < p.lx ? -(p.hw - 8) : (p.hw - 8));
     const dLine = Math.hypot(edgeX - p.ax, p.ly - p.ay);
     if (dLine > 10) {
       const mx = p.ax + (edgeX - p.ax) * 0.42;
-      svgMarkup += `<polyline class="leader-line ${accent}" points="${p.ax.toFixed(1)},${p.ay.toFixed(1)} ${mx.toFixed(1)},${p.ly.toFixed(1)} ${edgeX.toFixed(1)},${p.ly.toFixed(1)}" />`;
+      const pts = `${p.ax.toFixed(1)},${p.ay.toFixed(1)} ${mx.toFixed(1)},${p.ly.toFixed(1)} ${edgeX.toFixed(1)},${p.ly.toFixed(1)}`;
+      if (pts !== m.lastPts) {
+        m.svgLine.setAttribute('points', pts);
+        m.svgDot.setAttribute('cx', p.ax.toFixed(1));
+        m.svgDot.setAttribute('cy', p.ay.toFixed(1));
+        m.lastPts = pts;
+      }
+      if (m.svgLine.style.display === 'none') m.svgLine.style.display = '';
+    } else {
+      if (m.svgLine.style.display !== 'none') m.svgLine.style.display = 'none';
+      m.svgDot.setAttribute('cx', p.ax.toFixed(1));
+      m.svgDot.setAttribute('cy', p.ay.toFixed(1));
     }
-    svgMarkup += `<circle class="leader-dot ${accent}" cx="${p.ax.toFixed(1)}" cy="${p.ay.toFixed(1)}" r="3.8" />`;
-  });
-  leadersSvg.innerHTML = svgMarkup;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1624,23 +1759,27 @@ function setupScrollChoreography() {
   }
 
   // Master continuous 3D choreography across all 12 chapters
+  let lastDockShown = false;
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: '.chapters-container',
       start: 'top top',
       end: 'bottom bottom',
-      scrub: 0.75,
+      scrub: 0.42,
       onUpdate: (self) => {
         state.scrollProgress = self.progress;
-        progressBar.style.width = `${(self.progress * 100).toFixed(1)}%`;
+        progressBar.style.transform = `scaleX(${self.progress.toFixed(4)})`;
 
         if (self.progress < 0.84 && state.manualOverride) {
           state.manualOverride = false;
           if (state.freeOrbit) setFreeOrbit(false);
         }
         const dockShown = self.progress > 0.86;
-        dock.classList.toggle('visible', dockShown);
-        scrollyStage?.classList.toggle('dock-visible', dockShown);
+        if (dockShown !== lastDockShown) {
+          lastDockShown = dockShown;
+          dock.classList.toggle('visible', dockShown);
+          scrollyStage?.classList.toggle('dock-visible', dockShown);
+        }
       },
     },
   });
@@ -1842,10 +1981,15 @@ function setupScrollChoreography() {
 
 function focusPartInFreeOrbit(partId) {
   const obj = partMap.get(partId);
+  const localBox = localBoundsMap.get(partId);
   if (!obj) return;
+  if (localBox) {
+    tmpBox.copy(localBox).applyMatrix4(obj.matrixWorld);
+    flyTarget = tmpBox.getCenter(new THREE.Vector3());
+    return;
+  }
   const box = new THREE.Box3().setFromObject(obj);
-  if (box.isEmpty()) return;
-  flyTarget = box.getCenter(new THREE.Vector3());
+  if (!box.isEmpty()) flyTarget = box.getCenter(new THREE.Vector3());
 }
 
 function resetInspectorCamera() {
@@ -2019,25 +2163,62 @@ const PART_CHANNEL = {
 
 const clock = new THREE.Clock();
 
-function applyRigState(elapsed) {
+// Frame-rate-independent smoothed rig channels (eliminates wheel-tick micro-stutter across 60/120/144Hz monitors!)
+const rigSmooth = {
+  camX: state.camX, camY: state.camY, camZ: state.camZ,
+  targetX: state.targetX, targetY: state.targetY, targetZ: state.targetZ,
+  modelRotY: state.modelRotY,
+  headTiltDeg: state.headTiltDeg,
+  xrayAmount: state.xrayAmount,
+  beamIntensity: state.beamIntensity,
+  exShell: 0, exSchedaA: 0, exSchedaB: 0, exSchedaC: 0, exAudioIot: 0, exPower: 0, exBase: 0,
+};
+
+const EXPLODE_ENTRIES = Object.entries(EXPLODE_VECTORS);
+let lastIsolatedId = null;
+let perfShadowsDisabled = false;
+let lastHudStr = '';
+let lastSliderEx = -1;
+let lastSliderTilt = -999;
+let ctrlExplodeEl = null;
+let valExplodeEl = null;
+let ctrlTiltEl = null;
+let valTiltEl = null;
+
+function applyRigState(elapsed, dt) {
   if (!ponduloRoot) return;
+
+  // Critically damped dt-based exponential smoothing (identical feel at 30, 60, 120 or 144 FPS!)
+  const kRig = 1 - Math.exp(-dt * 12.5);
+  rigSmooth.modelRotY += (state.modelRotY - rigSmooth.modelRotY) * kRig;
+  rigSmooth.headTiltDeg += (state.headTiltDeg - rigSmooth.headTiltDeg) * kRig;
+  rigSmooth.xrayAmount += (state.xrayAmount - rigSmooth.xrayAmount) * kRig;
+  rigSmooth.beamIntensity += (state.beamIntensity - rigSmooth.beamIntensity) * kRig;
+  rigSmooth.exShell += (state.exShell - rigSmooth.exShell) * kRig;
+  rigSmooth.exSchedaA += (state.exSchedaA - rigSmooth.exSchedaA) * kRig;
+  rigSmooth.exSchedaB += (state.exSchedaB - rigSmooth.exSchedaB) * kRig;
+  rigSmooth.exSchedaC += (state.exSchedaC - rigSmooth.exSchedaC) * kRig;
+  rigSmooth.exAudioIot += (state.exAudioIot - rigSmooth.exAudioIot) * kRig;
+  rigSmooth.exPower += (state.exPower - rigSmooth.exPower) * kRig;
+  rigSmooth.exBase += (state.exBase - rigSmooth.exBase) * kRig;
 
   // Subtle idle motion
   const idleSway = state.freeOrbit ? 0 : Math.sin(elapsed * 0.85) * 0.03;
-  ponduloRoot.rotation.y = state.modelRotY + idleSway;
+  ponduloRoot.rotation.y = rigSmooth.modelRotY + idleSway;
 
   // Real rotary hinge tilt on head_pivot
   if (headPivot) {
-    headPivot.rotation.x = THREE.MathUtils.degToRad(state.headTiltDeg);
+    headPivot.rotation.x = THREE.MathUtils.degToRad(rigSmooth.headTiltDeg);
   }
 
-  // Per-subsystem zero-collision explosion offsets
-  for (const [name, vec] of Object.entries(EXPLODE_VECTORS)) {
+  // Per-subsystem zero-collision explosion offsets (zero per-frame array allocations)
+  for (let i = 0; i < EXPLODE_ENTRIES.length; i++) {
+    const [name, vec] = EXPLODE_ENTRIES[i];
     const obj = partMap.get(name);
     const baseP = origPos.get(name);
     if (!obj || !baseP) continue;
     const chKey = PART_CHANNEL[name];
-    const f = chKey ? state[chKey] : 0;
+    const f = chKey ? rigSmooth[chKey] : 0;
     obj.position.set(
       baseP.x + vec.x * f,
       baseP.y + vec.y * f,
@@ -2045,9 +2226,8 @@ function applyRigState(elapsed) {
     );
   }
 
-  // Smooth, glitch-free X-Ray shader switching (ALWAYS calls mat.needsUpdate on state flip!)
-  // Head goes X-Ray in Ch 04-09 or manual X-Ray; Base only goes X-Ray in Ch 04, Ch 10, or manual X-Ray!
-  const effectiveXray = state.manualXray ? 1.0 : state.xrayAmount;
+  // Smooth, glitch-free X-Ray shader switching (prewarmed in WebGLPrograms cache at load time!)
+  const effectiveXray = state.manualXray ? 1.0 : rigSmooth.xrayAmount;
   const headXray = effectiveXray;
   const baseXray = state.manualXray
     ? 1.0
@@ -2055,24 +2235,24 @@ function applyRigState(elapsed) {
 
   function applyShellXray(meshes, edges, amount) {
     const isTranslucent = amount > 0.04;
-    const opacity = 1.0 - amount * 0.84; // Solid 1.0 -> clean frosted glass 0.16
-    meshes.forEach((mesh) => {
+    const opacity = 1.0 - amount * 0.84;
+    for (let i = 0; i < meshes.length; i++) {
+      const mesh = meshes[i];
       const mat = mesh.material;
-      if (!mat) return;
+      if (!mat) continue;
       if (mat.transparent !== isTranslucent) {
         mat.transparent = isTranslucent;
-        mat.needsUpdate = true; // CRITICAL: forces Three.js WebGL shader recompile!
+        mat.needsUpdate = true;
       }
       mat.opacity = isTranslucent ? opacity : 1.0;
       mat.depthWrite = !isTranslucent;
-      mat.depthTest = true;
       mesh.renderOrder = isTranslucent ? 10 : 0;
-      mesh.castShadow = !isTranslucent;
-    });
-    edges.forEach(({ lines, mat }) => {
-      lines.visible = amount > 0.06;
-      mat.opacity = Math.min(amount * 0.36, 0.36);
-    });
+      if (!perfShadowsDisabled) mesh.castShadow = !isTranslucent;
+    }
+    for (let i = 0; i < edges.length; i++) {
+      edges[i].lines.visible = amount > 0.06;
+      edges[i].mat.opacity = Math.min(amount * 0.36, 0.36);
+    }
   }
 
   applyShellXray(headShellMeshes, headXrayEdges, headXray);
@@ -2080,57 +2260,55 @@ function applyRigState(elapsed) {
 
   // Crisp thin black CAD edge outlines appear smoothly AFTER leaving the Chapter 01 Hero!
   const pastHero = THREE.MathUtils.clamp((state.scrollProgress - 0.035) / 0.045, 0, 1);
-  cadInkEdges.forEach(({ lines, mat, isHead }) => {
-    const shellXray = isHead ? headXray : baseXray;
+  for (let i = 0; i < cadInkEdges.length; i++) {
+    const e = cadInkEdges[i];
+    const shellXray = e.isHead ? headXray : baseXray;
     const inkOpacity = pastHero * (1.0 - shellXray * 0.85) * 0.48;
-    lines.visible = inkOpacity > 0.02;
-    mat.opacity = inkOpacity;
-  });
+    e.lines.visible = inkOpacity > 0.02;
+    e.mat.opacity = inkOpacity;
+  }
 
-  // Component Isolate mode: dim non-isolated boards cleanly so the chosen board pops!
-  isolateTrackedMeshes.forEach(({ mesh, groupId, origOpacity, origTrans }) => {
-    const dim = state.isolatedId && state.isolatedId !== groupId;
-    const targetTrans = dim ? true : origTrans;
-    if (mesh.material.transparent !== targetTrans) {
-      mesh.material.transparent = targetTrans;
-      mesh.material.needsUpdate = true;
-    }
-    mesh.material.opacity = dim ? 0.14 : origOpacity;
-    mesh.material.depthWrite = !dim;
-  });
+  // Component Isolate mode: ONLY touch materials when state.isolatedId actually changes!
+  if (state.isolatedId !== lastIsolatedId) {
+    lastIsolatedId = state.isolatedId;
+    isolateTrackedMeshes.forEach(({ mesh, groupId, origOpacity, origTrans }) => {
+      const dim = state.isolatedId && state.isolatedId !== groupId;
+      const targetTrans = dim ? true : origTrans;
+      if (mesh.material.transparent !== targetTrans) {
+        mesh.material.transparent = targetTrans;
+        mesh.material.needsUpdate = true;
+      }
+      mesh.material.opacity = dim ? 0.14 : origOpacity;
+      mesh.material.depthWrite = !dim;
+    });
+  }
 
   // 1 Hz STM32 NUCLEO-G474RE LD2 green heartbeat LED blink!
   const hb = (Math.sin(elapsed * Math.PI * 2.0) > 0.15) ? 1.0 : 0.12;
-  ledGreenMaterials.forEach((m) => {
-    m.emissiveIntensity = hb;
-  });
+  for (let i = 0; i < ledGreenMaterials.length; i++) {
+    ledGreenMaterials[i].emissiveIntensity = hb;
+  }
 
-  badgeMaterials.forEach((mat) => {
-    // nisc_badge is already alphaMode BLEND (transparent: true)
-    mat.opacity = 1.0 - headXray * 0.78;
-    mat.depthWrite = headXray <= 0.04;
-  });
+  for (let i = 0; i < badgeMaterials.length; i++) {
+    badgeMaterials[i].opacity = 1.0 - headXray * 0.78;
+    badgeMaterials[i].depthWrite = headXray <= 0.04;
+  }
 
-  // Gently fade internal jumper wires when boards are widely exploded
-  const maxHeadEx = Math.max(state.exShell, state.exSchedaA, state.exSchedaB, state.exSchedaC, state.exAudioIot, state.exPower);
+  // Gently fade internal jumper wires when boards are widely exploded (pre-flagged transparent -> ZERO shader recompile!)
+  const maxHeadEx = Math.max(rigSmooth.exShell, rigSmooth.exSchedaA, rigSmooth.exSchedaB, rigSmooth.exSchedaC, rigSmooth.exAudioIot, rigSmooth.exPower);
   const wireOpacity = THREE.MathUtils.clamp(1.0 - maxHeadEx * 0.82, 0.18, 1.0);
-  const wireTrans = wireOpacity < 0.98;
-  wireMaterials.forEach((mat) => {
-    if (mat.transparent !== wireTrans) {
-      mat.transparent = wireTrans;
-      mat.needsUpdate = true;
-    }
-    mat.opacity = wireOpacity;
-    mat.depthWrite = !wireTrans;
-  });
+  for (let i = 0; i < wireMaterials.length; i++) {
+    wireMaterials[i].opacity = wireOpacity;
+    wireMaterials[i].depthWrite = wireOpacity > 0.96;
+  }
 
   // Drop & soften studio floor smoothly when Base explodes so underside amp/speaker/HX711 NEVER clip floor!
-  floorGroup.position.y = -state.exBase * 0.95;
-  floorMat.opacity = 0.65 * (1.0 - state.exBase * 0.55);
-  ringMat.opacity = 0.13 * (1.0 - state.exBase * 0.55);
+  floorGroup.position.y = -rigSmooth.exBase * 0.95;
+  floorMat.opacity = 0.65 * (1.0 - rigSmooth.exBase * 0.55);
+  ringMat.opacity = 0.13 * (1.0 - rigSmooth.exBase * 0.55);
 
   // Volumetric 8x8 ToF Laser Beam + Animated 3D Cartoon Hand + Live 3D TFT & 7-Seg Displays!
-  const bi = state.forceBeam ? 1.0 : state.beamIntensity;
+  const bi = state.forceBeam ? 1.0 : rigSmooth.beamIntensity;
   if (tofBeam) {
     tofBeam.visible = bi > 0.02;
     if (tofBeam.visible) {
@@ -2314,8 +2492,9 @@ function applyRigState(elapsed) {
         gestureTft = { mode: e > 0.5 ? 'food' : 'clinical', cursorX: THREE.MathUtils.lerp(0.82, 0.24, e), cursorY: THREE.MathUtils.lerp(0.52, 0.44, e), dwell: 0, flash: 0 };
       }
 
-      // Exponential critically-damped smoothing (buttery Pixar-like follow-through!)
-      const k = 0.11;
+      // Exponential dt-damped smoothing (buttery Pixar-like follow-through at any refresh rate!)
+      const k = 1 - Math.exp(-dt * 7.2);
+      const kFast = 1 - Math.exp(-dt * 10.5);
       hand.position.x = THREE.MathUtils.lerp(hand.position.x, tx, k);
       hand.position.y = THREE.MathUtils.lerp(hand.position.y, ty, k);
       hand.position.z = THREE.MathUtils.lerp(hand.position.z, tz, k);
@@ -2323,19 +2502,21 @@ function applyRigState(elapsed) {
       hand.rotation.y = THREE.MathUtils.lerp(hand.rotation.y, ry, k);
       hand.rotation.z = THREE.MathUtils.lerp(hand.rotation.z, rz, k);
 
-      spotMesh.position.x = THREE.MathUtils.lerp(spotMesh.position.x, -0.12 + hand.position.x * 0.85, 0.16);
-      spotMesh.position.y = THREE.MathUtils.lerp(spotMesh.position.y, 0.02 + hand.position.y * 0.85, 0.16);
+      spotMesh.position.x = THREE.MathUtils.lerp(spotMesh.position.x, -0.12 + hand.position.x * 0.85, kFast);
+      spotMesh.position.y = THREE.MathUtils.lerp(spotMesh.position.y, 0.02 + hand.position.y * 0.85, kFast);
       tipRing.visible = showTip;
-      tipRingMat.opacity = THREE.MathUtils.lerp(tipRingMat.opacity, showTip ? targetTipOp : 0, 0.14);
-      spotMat.opacity = THREE.MathUtils.lerp(spotMat.opacity, targetSpotOp, 0.14);
-      swipeTrailMat.opacity = THREE.MathUtils.lerp(swipeTrailMat.opacity, targetTrail, 0.14);
+      tipRingMat.opacity = THREE.MathUtils.lerp(tipRingMat.opacity, showTip ? targetTipOp : 0, kFast);
+      spotMat.opacity = THREE.MathUtils.lerp(spotMat.opacity, targetSpotOp, kFast);
+      swipeTrailMat.opacity = THREE.MathUtils.lerp(swipeTrailMat.opacity, targetTrail, kFast);
     }
   }
 
-  // Throttle live CanvasTexture redraws to ~18 Hz (Hero Intro & ToF Gesture ALWAYS take priority over Simulator!)
-  if (liveDisplays && elapsed - (liveDisplays._lastDraw || 0) > 0.055) {
+  // Smart CanvasTexture throttle: ~18 Hz during Hero/ToF/Simulator, ~5 Hz during explosion/back-views to save GPU bandwidth!
+  const sim = window.ponduloLiveSim;
+  const highFreqScreen = Boolean(introTft || gestureTft || (sim && sim.overrideActive));
+  const drawInterval = highFreqScreen ? 0.055 : 0.22;
+  if (liveDisplays && elapsed - (liveDisplays._lastDraw || 0) > drawInterval) {
     liveDisplays._lastDraw = elapsed;
-    const sim = window.ponduloLiveSim;
     if (introTft) {
       liveDisplays.renderTFT(introTft);
       liveDisplays.renderSevenSeg(introSegWeight ?? 0, introKittPos);
@@ -2359,39 +2540,58 @@ function applyRigState(elapsed) {
     const showFlow = state.forceDataFlow || autoFlow;
     dataFlowGroup.visible = showFlow;
     if (showFlow) {
-      dataFlowGroup.userData.packets.forEach((p) => {
+      const pkts = dataFlowGroup.userData.packets;
+      for (let i = 0; i < pkts.length; i++) {
+        const p = pkts[i];
         const t = (elapsed * p.speed + p.phase) % 1.0;
         p.curve.getPointAt(t, p.mesh.position);
-      });
+      }
     }
   }
 
-  // Camera tracking
+  // Frame-rate-independent Camera tracking
   if (!state.freeOrbit) {
     flyTarget = null;
-    camera.position.lerp(tmpVec.set(state.camX, state.camY, state.camZ), 0.11);
-    controls.target.lerp(tmpTarget.set(state.targetX, state.targetY, state.targetZ), 0.11);
+    const kCam = 1 - Math.exp(-dt * 9.5);
+    camera.position.lerp(tmpVec.set(state.camX, state.camY, state.camZ), kCam);
+    controls.target.lerp(tmpTarget.set(state.targetX, state.targetY, state.targetZ), kCam);
     camera.lookAt(controls.target);
   } else {
     if (flyTarget) {
-      controls.target.lerp(flyTarget, 0.12);
+      const kFly = 1 - Math.exp(-dt * 8.5);
+      controls.target.lerp(flyTarget, kFly);
       if (controls.target.distanceTo(flyTarget) < 0.015) flyTarget = null;
     }
     controls.update();
   }
 
-  // Sync HUD & sliders
-  const maxExPct = Math.round(Math.max(maxHeadEx, state.exBase) * 100);
+  // Sync HUD & sliders ONLY when values actually change (eliminates 60 FPS DOM mutations!)
+  const maxExPct = Math.round(Math.max(maxHeadEx, rigSmooth.exBase) * 100);
   const xrayPct = Math.round(effectiveXray * 100);
-  hudTelemetry.textContent = `TILT ${state.headTiltDeg >= 0 ? '+' : ''}${state.headTiltDeg.toFixed(0)}° · X-RAY ${xrayPct}% · EXPLODE ${maxExPct}%`;
+  const tiltInt = Math.round(rigSmooth.headTiltDeg);
+  const nextHud = `TILT ${tiltInt >= 0 ? '+' : ''}${tiltInt}° · X-RAY ${xrayPct}% · EXPLODE ${maxExPct}%`;
+  if (nextHud !== lastHudStr) {
+    lastHudStr = nextHud;
+    hudTelemetry.textContent = nextHud;
+  }
 
   if (!state.manualOverride) {
-    const ce = document.getElementById('ctrl-explode');
-    const ve = document.getElementById('val-explode');
-    const ct = document.getElementById('ctrl-tilt');
-    const vt = document.getElementById('val-tilt');
-    if (ce && ve) { ce.value = maxExPct; ve.textContent = `${maxExPct}%`; }
-    if (ct && vt) { ct.value = Math.round(state.headTiltDeg); vt.textContent = `${Math.round(state.headTiltDeg)}°`; }
+    if (!ctrlExplodeEl) {
+      ctrlExplodeEl = document.getElementById('ctrl-explode');
+      valExplodeEl = document.getElementById('val-explode');
+      ctrlTiltEl = document.getElementById('ctrl-tilt');
+      valTiltEl = document.getElementById('val-tilt');
+    }
+    if (maxExPct !== lastSliderEx && ctrlExplodeEl && valExplodeEl) {
+      lastSliderEx = maxExPct;
+      ctrlExplodeEl.value = maxExPct;
+      valExplodeEl.textContent = `${maxExPct}%`;
+    }
+    if (tiltInt !== lastSliderTilt && ctrlTiltEl && valTiltEl) {
+      lastSliderTilt = tiltInt;
+      ctrlTiltEl.value = tiltInt;
+      valTiltEl.textContent = `${tiltInt}°`;
+    }
   }
 }
 
@@ -2405,15 +2605,45 @@ if (scrollyStageObserverEl && 'IntersectionObserver' in window) {
   io.observe(scrollyStageObserverEl);
 }
 
-function animate() {
+// Automatic Adaptive Quality Governor: if an older PC / integrated GPU drops below ~43 FPS,
+// transparently lowers pixelRatio to 1.0 and disables dynamic shadows to guarantee silky 60 FPS!
+let lastFrameTime = performance.now();
+let perfSampleCount = 0;
+let perfDtSum = 0;
+let perfScaledDown = false;
+
+function animate(now = performance.now()) {
   requestAnimationFrame(animate);
+  const rawDt = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
   if (!renderer || webglLost || document.hidden || !stageVisible) return;
+
+  const dt = Math.min(0.05, Math.max(0.001, rawDt));
+
+  if (!perfScaledDown && ponduloRoot && rawDt > 0.004 && rawDt < 0.12) {
+    perfDtSum += rawDt;
+    perfSampleCount += 1;
+    if (perfSampleCount >= 40) {
+      const avgDt = perfDtSum / perfSampleCount;
+      if (avgDt > 0.0235) {
+        perfScaledDown = true;
+        perfShadowsDisabled = true;
+        maxPixelRatio = 1.0;
+        renderer.setPixelRatio(1.0);
+        renderer.shadowMap.enabled = false;
+        keyLight.castShadow = false;
+      }
+      perfDtSum = 0;
+      perfSampleCount = 0;
+    }
+  }
+
   const elapsed = clock.getElapsedTime();
-  applyRigState(elapsed);
+  applyRigState(elapsed, dt);
   renderer.render(scene, camera);
   updateHotspotPositions();
 }
-animate();
+requestAnimationFrame(animate);
 
 let resizeDebounce = null;
 function handleViewportResize() {
@@ -2423,8 +2653,12 @@ function handleViewportResize() {
   camera.aspect = w / h;
   camera.fov = computeDynamicFov();
   camera.updateProjectionMatrix();
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, w < 768 ? 1.5 : 2));
+  if (!perfScaledDown) {
+    maxPixelRatio = w < 768 ? 1.35 : 1.5;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
   renderer.setSize(w, h);
+  measurePinDimensions();
   clearTimeout(resizeDebounce);
   resizeDebounce = setTimeout(() => {
     if (window.ScrollTrigger) window.ScrollTrigger.refresh();

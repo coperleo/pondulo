@@ -345,7 +345,10 @@ code {
 }
 .scroll-progress-bar {
   height: 100%;
-  width: 0%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  will-change: transform;
   background: linear-gradient(90deg, var(--red), var(--cyan));
 }
 
@@ -386,6 +389,7 @@ code {
   position: absolute;
   top: 0; left: 0;
   transform: translate(-50%, -50%);
+  will-change: transform, opacity;
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
@@ -393,16 +397,15 @@ code {
   padding: 0.3rem 0.72rem 0.3rem 0.34rem;
   border-radius: 99px;
   border: 1px solid rgba(255, 255, 255, 0.26);
-  background: rgba(10, 12, 18, 0.88);
-  backdrop-filter: blur(12px);
+  background: rgba(10, 13, 20, 0.94);
   color: var(--text);
   font-family: var(--font-mono);
   font-size: 0.71rem;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.28s ease, border-color 0.2s, background 0.2s;
+  transition: opacity 0.24s ease, border-color 0.2s, background 0.2s;
   white-space: nowrap;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.48);
 }
 
 .hotspot-pin.visible { opacity: 1; }
@@ -553,6 +556,7 @@ code {
   left: 50%;
   bottom: 1.4rem;
   transform: translateX(-50%) translateY(18px);
+  will-change: transform, opacity;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -560,10 +564,11 @@ code {
   gap: 1rem 1.25rem;
   padding: 0.75rem 1.2rem;
   border-radius: 999px;
-  background: rgba(12, 15, 22, 0.86);
+  background: rgba(12, 15, 22, 0.92);
   border: 1px solid var(--border-strong);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.52);
   z-index: 30;
   opacity: 0;
   pointer-events: none;
@@ -675,10 +680,10 @@ code {
   gap: 0.42rem;
   padding: 0.36rem 0.44rem;
   border-radius: 999px;
-  background: rgba(10, 13, 20, 0.82);
+  background: rgba(10, 13, 20, 0.9);
   border: 1px solid var(--border-strong);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48);
   transition: opacity 0.28s ease, transform 0.28s ease;
 }
@@ -897,11 +902,12 @@ code {
   width: min(440px, 90vw);
   padding: 1.65rem 1.75rem;
   border-radius: var(--radius);
-  background: var(--bg-card);
+  background: rgba(14, 17, 25, 0.86);
   border: 1px solid var(--border);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+  contain: layout style;
 }
 
 .hero-card {

@@ -1009,6 +1009,163 @@ function createDataFlowGroup() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 3E. 3D CAD TECHNICAL DIMENSIONS OVERLAY ("📏 Quote CAD" — ZERO OVERLAP!)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function makeCadLabelSprite(mainText, subText = '', accent = '#38bdf8') {
+  const c = document.createElement('canvas');
+  c.width = 360;
+  c.height = subText ? 96 : 74;
+  const ctx = c.getContext('2d');
+
+  ctx.fillStyle = 'rgba(8, 12, 20, 0.92)';
+  ctx.beginPath();
+  ctx.roundRect(4, 4, c.width - 8, c.height - 8, 14);
+  ctx.fill();
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = accent;
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = '700 28px "JetBrains Mono", monospace';
+  ctx.fillText(mainText, c.width / 2, subText ? 34 : c.height / 2 + 1);
+
+  if (subText) {
+    ctx.fillStyle = accent;
+    ctx.font = '600 17px "JetBrains Mono", monospace';
+    ctx.fillText(subText, c.width / 2, 68);
+  }
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const sprite = new THREE.Sprite(mat);
+  const aspect = c.width / c.height;
+  const hWorld = subText ? 0.25 : 0.20;
+  sprite.scale.set(hWorld * aspect, hWorld, 1);
+  sprite.renderOrder = 24;
+  return sprite;
+}
+
+function addDimSegment(targetGroup, p1, p2, ext1, ext2, tickAxis, lineMat, extMat) {
+  const mainPts = [new THREE.Vector3(...p1), new THREE.Vector3(...p2)];
+  const tickLen = 0.065;
+  const t = new THREE.Vector3(...tickAxis).multiplyScalar(tickLen);
+  mainPts.push(
+    new THREE.Vector3(...p1).sub(t), new THREE.Vector3(...p1).add(t),
+    new THREE.Vector3(...p2).sub(t), new THREE.Vector3(...p2).add(t)
+  );
+  const geo = new THREE.BufferGeometry().setFromPoints(mainPts);
+  const segs = new THREE.LineSegments(geo, lineMat);
+  segs.renderOrder = 22;
+  targetGroup.add(segs);
+
+  if (ext1 && ext2) {
+    const extPts = [
+      new THREE.Vector3(...ext1), new THREE.Vector3(...p1),
+      new THREE.Vector3(...ext2), new THREE.Vector3(...p2),
+    ];
+    const eGeo = new THREE.BufferGeometry().setFromPoints(extPts);
+    const eSegs = new THREE.LineSegments(eGeo, extMat);
+    eSegs.renderOrder = 21;
+    targetGroup.add(eSegs);
+  }
+}
+
+function createCadDimensions3D() {
+  const baseGroup = new THREE.Group();
+  const headGroup = new THREE.Group();
+
+  const cyanLineMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92, depthTest: false });
+  const cyanExtMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.38, depthTest: false });
+  const redLineMat = new THREE.LineBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.92, depthTest: false });
+
+  // 1. Total Height: 330 mm (Right side X = +1.44, Y = 0.00 -> 3.30, Z = -0.15)
+  addDimSegment(
+    baseGroup,
+    [1.44, 0.0, -0.15], [1.44, 3.30, -0.15],
+    [0.78, 0.0, -0.15], [1.04, 3.30, -0.15],
+    [1, 0, 0], cyanLineMat, cyanExtMat
+  );
+  const lblH = makeCadLabelSprite('330 mm', 'ALTEZZA TOTALE', '#38bdf8');
+  lblH.position.set(1.44, 1.65, -0.15);
+  baseGroup.add(lblH);
+
+  // 2. Platter Size: 134 × 134 mm (Front bottom Y = 0.59, Z = +1.28, X = -0.67 -> +0.67)
+  addDimSegment(
+    baseGroup,
+    [-0.67, 0.59, 1.28], [0.67, 0.59, 1.28],
+    [-0.67, 0.59, 0.96], [0.67, 0.59, 0.96],
+    [0, 0, 1], cyanLineMat, cyanExtMat
+  );
+  const lblP = makeCadLabelSprite('134 × 134 mm', 'PIATTO PESATURA', '#38bdf8');
+  lblP.position.set(0.0, 0.59, 1.32);
+  baseGroup.add(lblP);
+
+  // 3. Rotary Hinge Arc: ±24° TILT (Rear-left around hinge axis Y=2.22, Z=-0.66, X=-1.18)
+  const arcPts = [];
+  const R = 0.58;
+  for (let i = 0; i <= 24; i++) {
+    const deg = -24 + (48 * i) / 24;
+    const rad = THREE.MathUtils.degToRad(deg);
+    // Vector pointing backward (-Z) rotated around X
+    const dy = Math.sin(rad) * R;
+    const dz = -Math.cos(rad) * R;
+    arcPts.push(new THREE.Vector3(-1.18, 2.22 + dy, -0.66 + dz));
+  }
+  const arcLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(arcPts), redLineMat);
+  arcLine.renderOrder = 22;
+  baseGroup.add(arcLine);
+
+  const needleGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-1.18, 0, 0),
+    new THREE.Vector3(-1.18, 0, -R),
+  ]);
+  const tiltNeedle = new THREE.Line(needleGeo, redLineMat);
+  tiltNeedle.position.set(0, 2.22, -0.66);
+  tiltNeedle.renderOrder = 23;
+  baseGroup.add(tiltNeedle);
+
+  const lblTilt = makeCadLabelSprite('±24° TILT', 'CERNIERA TESTA', '#facc15');
+  lblTilt.position.set(-1.18, 2.22, -1.46);
+  baseGroup.add(lblTilt);
+
+  // 4. Head Width: 200 mm (Attached to headPivot [0, 2.22, -0.6604] -> tilts WITH the head!)
+  //    head_shell local X = -1.00..+1.00, local Y top = +1.08, local Z center = +0.20
+  addDimSegment(
+    headGroup,
+    [-1.00, 1.38, 0.20], [1.00, 1.38, 0.20],
+    [-1.00, 1.10, 0.20], [1.00, 1.10, 0.20],
+    [0, 1, 0], cyanLineMat, cyanExtMat
+  );
+  const lblHW = makeCadLabelSprite('200 mm', 'LARGHEZZA TESTA', '#38bdf8');
+  lblHW.position.set(0.0, 1.44, 0.20);
+  headGroup.add(lblHW);
+
+  // 5. Head Height: 130 mm (Left side of head: local X = -1.36, local Y = -0.22..+1.08)
+  addDimSegment(
+    headGroup,
+    [-1.36, -0.22, 0.20], [-1.36, 1.08, 0.20],
+    [-1.03, -0.22, 0.20], [-1.03, 1.08, 0.20],
+    [1, 0, 0], cyanLineMat, cyanExtMat
+  );
+  const lblHH = makeCadLabelSprite('130 mm', 'ALTEZZA TESTA', '#38bdf8');
+  lblHH.position.set(-1.42, 0.43, 0.20);
+  headGroup.add(lblHH);
+
+  baseGroup.visible = false;
+  headGroup.visible = false;
+  return { baseGroup, headGroup, tiltNeedle };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 4. ANIMATION RIG STATE (PER-SUBSYSTEM EXTRACTION + AUTO X-RAY!)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1035,6 +1192,7 @@ const state = {
   freeOrbit: false,
   forceBeam: false,
   forceDataFlow: false,
+  showCadDims: false,
   isolatedId: null,
   showPinsToggle: true,
   activeChapter: 0,
@@ -1047,6 +1205,7 @@ let tofBeam = null;
 let cartoonHand = null;
 let fiorentinaGroup = null;
 let dataFlowGroup = null;
+let cadDims = null;
 let liveDisplays = null;
 let introStartTime = null;
 let introFinished = false;
@@ -1249,6 +1408,8 @@ if (renderer) loader.load(
       }
     });
 
+    cadDims = createCadDimensions3D();
+    ponduloRoot.add(cadDims.baseGroup);
     headPivot = partMap.get('head_pivot');
     if (headPivot) {
       tofBeam = createToFBeamGroup();
@@ -1257,6 +1418,7 @@ if (renderer) loader.load(
       headPivot.add(cartoonHand);
       dataFlowGroup = createDataFlowGroup();
       headPivot.add(dataFlowGroup);
+      headPivot.add(cadDims.headGroup);
     }
 
     // Add 3D Fiorentina T-Bone Steak to ponduloRoot for Hero K.I.T.T. -> 0 -> Weighing intro!
@@ -1430,7 +1592,7 @@ function updateHotspotPositions() {
   const isMobile = w < 720;
 
   let visibleIds;
-  if (!state.showPinsToggle) {
+  if (!state.showPinsToggle || state.showCadDims) {
     visibleIds = [];
   } else if (state.manualOverride) {
     const maxEx = Math.max(state.exShell, state.exSchedaA, state.exSchedaB, state.exSchedaC, state.exAudioIot, state.exPower, state.exBase);
@@ -2051,6 +2213,7 @@ function setupInspectorControls() {
   const btnXray = document.getElementById('btn-xray');
   const btnBeam = document.getElementById('btn-beam');
   const btnDataFlow = document.getElementById('btn-dataflow');
+  const btnDims = document.getElementById('btn-dims');
   const btnPins = document.getElementById('btn-pins');
   const btnResetCam = document.getElementById('btn-reset-cam');
   const btnOrbit = document.getElementById('btn-orbit');
@@ -2068,6 +2231,11 @@ function setupInspectorControls() {
     state.exPower = v;
     state.exBase = v;
     valExplode.textContent = `${ctrlExplode.value}%`;
+    // Auto-hide outer assembly CAD dimensions if user explodes model past 20% so dims never float in mid-air!
+    if (v > 0.2 && state.showCadDims) {
+      state.showCadDims = false;
+      btnDims?.classList.remove('active');
+    }
   });
 
   ctrlTilt.addEventListener('input', () => {
@@ -2101,9 +2269,29 @@ function setupInspectorControls() {
       : (isEn ? '◎ Isolate component' : '◎ Isola componente');
   });
 
+  btnDims?.addEventListener('click', () => {
+    state.manualOverride = true;
+    state.showCadDims = !state.showCadDims;
+    btnDims.classList.toggle('active', state.showCadDims);
+    if (state.showCadDims) {
+      // Mutually exclusive with 13 component pins + gently collapse explosion to 0% so CAD outer envelope is exact!
+      state.showPinsToggle = false;
+      btnPins.classList.remove('active');
+      closeDrawer();
+      state.exShell = 0; state.exSchedaA = 0; state.exSchedaB = 0;
+      state.exSchedaC = 0; state.exAudioIot = 0; state.exPower = 0; state.exBase = 0;
+      ctrlExplode.value = '0';
+      valExplode.textContent = '0%';
+    }
+  });
+
   btnPins.addEventListener('click', () => {
     state.showPinsToggle = !state.showPinsToggle;
     btnPins.classList.toggle('active', state.showPinsToggle);
+    if (state.showPinsToggle && state.showCadDims) {
+      state.showCadDims = false;
+      btnDims?.classList.remove('active');
+    }
     if (!state.showPinsToggle) closeDrawer();
   });
 
@@ -2546,6 +2734,20 @@ function applyRigState(elapsed, dt) {
         const t = (elapsed * p.speed + p.phase) % 1.0;
         p.curve.getPointAt(t, p.mesh.position);
       }
+    }
+  }
+
+  // 3D CAD Technical Dimensions Overlay (rotates with PONDULO & tilts with head; auto-hides if scrolled away)
+  if (cadDims) {
+    if (!state.manualOverride && state.showCadDims) {
+      state.showCadDims = false;
+      document.getElementById('btn-dims')?.classList.remove('active');
+    }
+    const showDims = state.showCadDims;
+    cadDims.baseGroup.visible = showDims;
+    cadDims.headGroup.visible = showDims;
+    if (showDims) {
+      cadDims.tiltNeedle.rotation.x = THREE.MathUtils.degToRad(rigSmooth.headTiltDeg);
     }
   }
 

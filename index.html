@@ -26,7 +26,7 @@
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
   <link rel="preload" as="fetch" crossorigin href="assets/pondulo.glb?v=7" />
-  <link rel="stylesheet" href="css/style.css?v=15" />
+  <link rel="stylesheet" href="css/style.css?v=16" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -161,6 +161,7 @@
           <button class="dock-btn" id="btn-xray" type="button" data-i18n="dock_xray">Raggi X</button>
           <button class="dock-btn" id="btn-beam" type="button" data-i18n="dock_beam">Fascio ToF</button>
           <button class="dock-btn" id="btn-dataflow" type="button" data-i18n="dock_flow">⚡ Flusso Dati</button>
+          <button class="dock-btn" id="btn-dims" type="button" data-i18n="dock_dims">📏 Quote CAD</button>
           <button class="dock-btn active" id="btn-pins" type="button" data-i18n="dock_pins">Etichette</button>
           <button class="dock-btn" id="btn-reset-cam" type="button" title="Ricentra telecamera (R)">↺ Reset</button>
           <button class="dock-btn dock-btn-primary dock-btn-pulse" id="btn-orbit" type="button">🧭 Esplora 360°</button>
@@ -558,6 +559,51 @@
             </div>
           </div>
         </div>
+
+        <!-- Companion Row: ESP8266 Wi-Fi Price Web App + Animated 58mm Thermal Receipt Printer -->
+        <div class="sim-extras-grid">
+          <!-- Left: Simulated ESP8266 HTTP Price Manager (192.168.4.1 -> UART1 38400) -->
+          <div class="sim-panel esp-webapp-card">
+            <div class="sim-panel-head">
+              <span>📱 ESP8266 WEB UI · <code>http://192.168.4.1</code></span>
+              <span class="esp-online-pill"><i class="esp-dot"></i> LittleFS · UART1</span>
+            </div>
+            <p class="esp-helper" data-i18n="esp_helper">
+              Modifica i prezzi €/kg come dal telefono collegato al Wi-Fi dell'ESP8266 e inviali alla STM32: vedrai aggiornarsi subito il calcolo sul display TFT e sul modello 3D.
+            </p>
+            <div class="esp-price-list" id="esp-price-list"></div>
+            <div class="esp-actions-row">
+              <button type="button" class="esp-send-btn" id="esp-btn-save" data-i18n="esp_btn_save">
+                📡 Salva (.tmp → LittleFS) &amp; Invia su UART1
+              </button>
+              <button type="button" class="sim-mini-btn esp-reset-btn" id="esp-btn-reset" data-i18n="esp_btn_reset">
+                ↺ Default
+              </button>
+            </div>
+            <div class="esp-uart-log" id="esp-uart-log" aria-live="polite">
+              <code>UART1 38400 8N1 · Pronto (prezzi in centesimi interi uint32_t)</code>
+            </div>
+          </div>
+
+          <!-- Right: 58mm Thermal Receipt Slot + Animated Paper Roll -->
+          <div class="sim-panel printer-card">
+            <div class="sim-panel-head">
+              <span>🧾 SCONTRINO TERMICO · 58 mm</span>
+              <button type="button" class="sim-mini-btn printer-quick-btn" id="sim-btn-print-now" data-i18n="printer_btn_now">
+                🖨 Stampa ora
+              </button>
+            </div>
+            <div class="printer-bezel">
+              <div class="printer-slot-lip"></div>
+              <div class="receipt-chute" id="receipt-chute">
+                <div class="receipt-empty-hint" id="receipt-empty-hint" data-i18n="receipt_hint">
+                  Conferma <strong>✓ STAMPA</strong> sul display TFT (oppure premi <em>Stampa ora</em>) per far uscire lo scontrino con la pesata attuale.
+                </div>
+                <div class="thermal-receipt" id="thermal-receipt" aria-live="polite" hidden></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -581,11 +627,12 @@
             <div class="node-meta">8×8 @ 15 Hz · 4×4 @ 60 Hz</div>
           </div>
 
-          <div class="arch-link">
+          <div class="arch-link arch-link-interactive" data-scope-bus="usart3" role="button" tabindex="0" title="Clicca per ispezionare il segnale su oscilloscopio">
             <span class="link-line"></span>
             <div class="link-label">
               <strong>USART3 · 921.600 baud</strong>
               <span>PC10 → PC11 · ASCII <code>$XY</code> / <code>$GS</code></span>
+              <em class="link-probe-tag">🔍 Sonda CH2</em>
             </div>
             <span class="link-arrow">→</span>
           </div>
@@ -600,11 +647,12 @@
             </div>
           </div>
 
-          <div class="arch-link">
+          <div class="arch-link arch-link-interactive" data-scope-bus="dac" role="button" tabindex="0" title="Clicca per ispezionare la tensione DAC sull'oscilloscopio">
             <span class="link-arrow">←</span>
             <div class="link-label link-analog">
               <strong>DAC → ADC Analogico</strong>
               <span>PA4 → PA4 · 0–3,3 V = 0–1000 g</span>
+              <em class="link-probe-tag">🔍 Sonda CH1</em>
             </div>
             <span class="link-line"></span>
           </div>
@@ -614,6 +662,42 @@
             <h3>NUCLEO-G474RE + HX711</h3>
             <p>Legge cella di carico 24-bit, applica media mobile 16 campioni, ciclo Live/Hold + Auto-Zero tracking, pilota display 8 cifre <code>2× CL3641BH / 74HC595</code> su SPI1.</p>
             <div class="node-meta">Auto-tare + Easter egg Knight Rider</div>
+          </div>
+        </div>
+
+        <!-- Interactive Bench Oscilloscope & Logic Analyzer for Inter-MCU Buses -->
+        <div class="scope-card" id="arch-scope">
+          <div class="scope-topbar">
+            <div class="scope-brand">
+              <span class="scope-led"></span>
+              <strong data-i18n="scope_title">OSCILLOSCOPIO &amp; LOGIC ANALYZER DI BANCO</strong>
+              <span class="scope-sub">Ispezione segnali reali tra i moduli STM32</span>
+            </div>
+            <div class="scope-probes" role="tablist" aria-label="Canali sonda">
+              <button type="button" class="scope-probe-btn active" data-bus="dac">CH1 · DAC→ADC (PA4)</button>
+              <button type="button" class="scope-probe-btn" data-bus="usart3">CH2 · USART3 921.6k</button>
+              <button type="button" class="scope-probe-btn" data-bus="i2c1">CH3 · I²C1 1MHz + INT</button>
+              <button type="button" class="scope-probe-btn" data-bus="spi1">CH4 · SPI1 74HC595</button>
+            </div>
+          </div>
+
+          <div class="scope-body">
+            <div class="scope-screen-wrap">
+              <canvas id="arch-scope-canvas" width="860" height="250" aria-label="Traccia oscilloscopio e analizzatore logico"></canvas>
+              <div class="scope-readouts" id="scope-readouts"></div>
+            </div>
+
+            <div class="scope-controls-bar">
+              <p class="scope-desc" id="scope-desc"></p>
+              <div class="scope-knobs">
+                <div class="scope-dac-ctrl" id="scope-dac-ctrl">
+                  <label for="scope-weight-slider"><span data-i18n="scope_weight_lbl">Peso campione:</span> <strong id="scope-weight-val">685 g</strong></label>
+                  <input type="range" id="scope-weight-slider" min="0" max="1000" step="5" value="685" />
+                  <button type="button" class="sim-mini-btn" id="scope-btn-pwm" data-i18n="scope_btn_pwm">Mostra vecchio PWM scartato</button>
+                </div>
+                <button type="button" class="sim-mini-btn scope-hold-btn" id="scope-btn-hold">⏸ Hold</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1063,8 +1147,8 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=22"></script>
-  <script type="module" src="js/features.js?v=6"></script>
-  <script type="module" src="js/i18n.js?v=5"></script>
+  <script type="module" src="js/app.js?v=23"></script>
+  <script type="module" src="js/features.js?v=7"></script>
+  <script type="module" src="js/i18n.js?v=6"></script>
 </body>
 </html>

@@ -21,6 +21,7 @@ const I18N_DICT = {
     dock_xray: 'X-Ray',
     dock_beam: 'ToF Beam',
     dock_flow: '⚡ Data Flow',
+    dock_dims: '📏 CAD Dims',
     dock_pins: 'Labels',
     sim_kicker: 'TRY IT LIVE IN YOUR BROWSER',
     sim_title: 'PONDULO Touchless UI Simulator.',
@@ -28,6 +29,14 @@ const I18N_DICT = {
     sim_dwell_hint: 'Dwell 1.5s or click',
     sim_weight_lbl: 'Simulate platter weight (0 – 1000 g)',
     sim_tare: 'Tare (0 g)',
+    esp_helper: 'Edit €/kg prices just like on the ESP8266 Wi-Fi web page and send them to the STM32: both the simulated TFT and the 3D model update live.',
+    esp_btn_save: '📡 Save (.tmp → LittleFS) & Send via UART1',
+    esp_btn_reset: '↺ Default',
+    printer_btn_now: '🖨 Print now',
+    receipt_hint: 'Confirm <strong>✓ RECEIPT</strong> on the TFT screen (or click <em>Print now</em>) to feed out the thermal receipt.',
+    scope_title: 'BENCH OSCILLOSCOPE & LOGIC ANALYZER',
+    scope_weight_lbl: 'Test weight:',
+    scope_btn_pwm: 'Compare discarded noisy PWM',
     bom_kicker: 'VERIFIED BILL OF MATERIALS · HARDWARE & FIRMWARE',
     bom_title: 'Full BOM & Official Datasheets',
     bom_f_all: 'All',
@@ -137,6 +146,7 @@ function initLanguageSwitcher() {
 
     if (window.ponduloRefreshSimulator) window.ponduloRefreshSimulator();
     if (window.ponduloRefreshBom) window.ponduloRefreshBom();
+    if (window.ponduloRefreshScope) window.ponduloRefreshScope();
   }
 
   btn.addEventListener('click', () => {

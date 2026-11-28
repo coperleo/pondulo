@@ -2466,3 +2466,451 @@ code {
   .chapter-stepper { bottom: 0.75rem; right: 0.85rem; padding: 0.25rem 0.34rem; }
   .inspector-dock { bottom: 0.65rem; padding: 0.45rem 0.8rem; gap: 0.55rem; }
 }
+
+/* ── ESP8266 WI-FI PRICE WEB APP + 58mm THERMAL RECEIPT PRINTER ──────────── */
+.sim-extras-grid {
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+  align-items: start;
+}
+
+.esp-online-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 99px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.38);
+  color: #86efac;
+  font-size: 0.65rem;
+}
+.esp-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+.esp-helper {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.48;
+  color: var(--text-muted);
+}
+.esp-price-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+.esp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.68rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+.esp-cut-name {
+  font-size: 0.8rem;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+.esp-stepper-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+.esp-step-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8fafc;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.16s, border-color 0.16s;
+}
+.esp-step-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--cyan);
+}
+.esp-price-input {
+  width: 58px;
+  padding: 0.24rem 0.3rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: #070a10;
+  color: var(--yellow);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: right;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.esp-price-input::-webkit-outer-spin-button,
+.esp-price-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.esp-unit {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--text-muted);
+}
+.esp-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.esp-send-btn {
+  flex: 1 1 220px;
+  padding: 0.62rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.55);
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.45), rgba(2, 132, 199, 0.35));
+  color: #f0f9ff;
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.2s, background 0.2s;
+}
+.esp-send-btn:hover {
+  border-color: var(--cyan);
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.65), rgba(2, 132, 199, 0.55));
+}
+.esp-send-btn:active { transform: scale(0.98); }
+.esp-reset-btn { flex: 0 0 auto; }
+.esp-uart-log {
+  padding: 0.48rem 0.68rem;
+  border-radius: 8px;
+  background: #06090f;
+  border: 1px solid var(--border);
+  font-size: 0.7rem;
+  color: #94a3b8;
+  overflow-x: auto;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.esp-uart-log code {
+  background: transparent;
+  padding: 0;
+  color: #7dd3fc;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+.esp-uart-log.flashing {
+  border-color: #22c55e;
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.24);
+}
+
+/* 58mm Thermal Printer Slot & Paper Feed */
+.printer-quick-btn {
+  flex: 0 0 auto;
+  padding: 0.26rem 0.62rem;
+  font-size: 0.68rem;
+}
+.printer-bezel {
+  background: #07090e;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 0.85rem 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.printer-slot-lip {
+  width: min(290px, 94%);
+  height: 11px;
+  border-radius: 99px;
+  background: #020305;
+  border: 1px solid #27303f;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.95), 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.receipt-chute {
+  width: min(272px, 90%);
+  min-height: 110px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.receipt-empty-hint {
+  margin-top: 1.15rem;
+  text-align: center;
+  font-size: 0.77rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  padding: 0 0.4rem;
+}
+.thermal-receipt {
+  width: 100%;
+  margin-top: -3px;
+  padding: 0.95rem 0.95rem 1.25rem;
+  background: #f8f6ef;
+  color: #18181b;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55);
+  position: relative;
+  transform-origin: top center;
+  /* Crisp serrated torn thermal paper bottom edge */
+  clip-path: polygon(
+    0% 0%, 100% 0%, 100% calc(100% - 7px),
+    96% 100%, 92% calc(100% - 7px), 88% 100%, 84% calc(100% - 7px),
+    80% 100%, 76% calc(100% - 7px), 72% 100%, 68% calc(100% - 7px),
+    64% 100%, 60% calc(100% - 7px), 56% 100%, 52% calc(100% - 7px),
+    48% 100%, 44% calc(100% - 7px), 40% 100%, 36% calc(100% - 7px),
+    32% 100%, 28% calc(100% - 7px), 24% 100%, 20% calc(100% - 7px),
+    16% 100%, 12% calc(100% - 7px), 8% 100%, 4% calc(100% - 7px), 0% 100%
+  );
+}
+.thermal-receipt[hidden] { display: none; }
+.thermal-receipt.feeding {
+  animation: receiptFeedOut 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes receiptFeedOut {
+  0% { transform: translateY(-88%); opacity: 0.35; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.rcp-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.14rem;
+}
+.rcp-head strong {
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  color: #09090b;
+}
+.rcp-head span {
+  font-size: 0.6rem;
+  color: #52525b;
+}
+.rcp-divider {
+  margin: 0.55rem 0;
+  border-top: 1px dashed #a1a1aa;
+}
+.rcp-items {
+  display: grid;
+  gap: 0.42rem;
+}
+.rcp-item-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #09090b;
+}
+.rcp-item-sub {
+  font-size: 0.62rem;
+  color: #52525b;
+}
+.rcp-summary {
+  display: grid;
+  gap: 0.28rem;
+  font-size: 0.68rem;
+}
+.rcp-summary > div {
+  display: flex;
+  justify-content: space-between;
+}
+.rcp-grand {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #09090b;
+  padding-top: 0.2rem;
+}
+.rcp-footer {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.42rem;
+  text-align: center;
+  font-size: 0.58rem;
+  color: #52525b;
+}
+.rcp-barcode {
+  width: 78%;
+  height: 28px;
+}
+.rcp-tear-btn {
+  margin-top: 0.15rem;
+  padding: 0.26rem 0.68rem;
+  border-radius: 99px;
+  border: 1px solid #d4d4d8;
+  background: #ffffff;
+  color: #27272a;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  cursor: pointer;
+}
+.rcp-tear-btn:hover { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+
+/* ── INTERACTIVE BENCH OSCILLOSCOPE & LOGIC ANALYZER ─────────────────────── */
+.arch-link-interactive {
+  cursor: pointer;
+}
+.arch-link-interactive .link-label {
+  transition: transform 0.18s ease, border-color 0.2s, box-shadow 0.2s;
+}
+.arch-link-interactive:hover .link-label {
+  transform: translateY(-2px);
+  border-color: var(--cyan);
+  box-shadow: 0 8px 20px rgba(56, 189, 248, 0.18);
+}
+.link-probe-tag {
+  display: block;
+  margin-top: 0.22rem;
+  font-style: normal;
+  font-size: 0.6rem;
+  color: var(--cyan);
+}
+.link-analog .link-probe-tag { color: var(--yellow); }
+
+.scope-card {
+  margin-bottom: 2.2rem;
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  overflow: hidden;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.42);
+}
+.scope-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.85rem 1.2rem;
+  background: rgba(8, 11, 18, 0.92);
+  border-bottom: 1px solid var(--border);
+}
+.scope-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+}
+.scope-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+.scope-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+.scope-probes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.scope-probe-btn {
+  font-family: var(--font-mono);
+  font-size: 0.69rem;
+  padding: 0.38rem 0.72rem;
+  border-radius: 99px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.scope-probe-btn:hover { color: #fff; border-color: rgba(255, 255, 255, 0.35); }
+.scope-probe-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: var(--cyan);
+  color: #f0f9ff;
+  font-weight: 600;
+}
+.scope-body {
+  padding: 1rem 1.2rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.scope-screen-wrap {
+  border-radius: 12px;
+  border: 2px solid #1e293b;
+  background: #05080d;
+  overflow: hidden;
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.85);
+}
+#arch-scope-canvas {
+  display: block;
+  width: 100%;
+  height: 250px;
+}
+.scope-readouts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
+  padding: 0.55rem 0.9rem;
+  background: #090d16;
+  border-top: 1px solid #1e293b;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+.scope-readouts strong { color: #e2e8f0; }
+.scope-controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+.scope-desc {
+  flex: 1 1 340px;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.scope-knobs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.scope-dac-ctrl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #cbd5e1;
+}
+.scope-dac-ctrl input[type="range"] {
+  width: 115px;
+  accent-color: var(--yellow);
+  cursor: pointer;
+}
+.scope-hold-btn { flex: 0 0 auto; }
+
+@media (max-width: 1024px) {
+  .sim-extras-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .esp-price-list { grid-template-columns: 1fr; }
+  .scope-topbar, .scope-body { padding: 0.75rem 0.85rem; }
+  .scope-sub { display: none; }
+  .scope-probe-btn { font-size: 0.64rem; padding: 0.32rem 0.56rem; }
+}

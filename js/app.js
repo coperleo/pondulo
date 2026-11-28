@@ -1596,7 +1596,7 @@ function updateHotspotPositions() {
     visibleIds = [];
   } else if (state.manualOverride) {
     const maxEx = Math.max(state.exShell, state.exSchedaA, state.exSchedaB, state.exSchedaC, state.exAudioIot, state.exPower, state.exBase);
-    visibleIds = maxEx > 0.15 ? HOTSPOTS.map((item) => item.id) : [];
+    visibleIds = maxEx > 0.08 ? HOTSPOTS.map((item) => item.id) : [];
   } else {
     visibleIds = CHAPTER_PINS[state.activeChapter] || [];
   }
@@ -1622,7 +1622,17 @@ function updateHotspotPositions() {
 
   const visibleSet = new Set(visibleIds);
   const isSpotlight = !state.manualOverride && state.activeChapter >= 4 && state.activeChapter <= 9;
-  const cardSide = state.manualOverride ? 'none' : (CHAPTER_CARD_SIDE[state.activeChapter] || 'none');
+  let cardSide = state.manualOverride ? 'none' : (CHAPTER_CARD_SIDE[state.activeChapter] || 'none');
+
+  // In Ch 11 (Full Explode) or Ch 12 (Inspector), once the card scrolls out of view or is minimized,
+  // unlock 100% of the screen so all 13 pins use the entire viewport freely!
+  if (cardSide === 'top' && state.activeChapter === 10) {
+    const c11 = document.getElementById('full-explode-card');
+    if (c11 && c11.getBoundingClientRect().bottom < 92) cardSide = 'none';
+  } else if (cardSide === 'left' && state.activeChapter === 11) {
+    const c12 = document.getElementById('inspector-card');
+    if (!c12 || c12.classList.contains('card-minimized') || state.freeOrbit) cardSide = 'none';
+  }
 
   // Safe viewport margins (avoids topbar, inspector dock, and narrative card — including bottom cards on mobile)
   const minY = isMobile ? 96 : (cardSide === 'top' ? 235 : 108);
@@ -1832,9 +1842,13 @@ function setupScrollChoreography() {
     let targetY;
     if (clamped === 0) {
       targetY = 0;
+    } else if (clamped === 10) {
+      // Chapter 11: land cleanly at the top of the Grand Explode showcase
+      const rect = targetEl.getBoundingClientRect();
+      targetY = Math.max(0, rect.top + window.scrollY - 12);
     } else if (clamped === chapters.length - 1) {
       const rect = targetEl.getBoundingClientRect();
-      targetY = Math.max(0, rect.top + window.scrollY - 24);
+      targetY = Math.max(0, rect.top + window.scrollY + 80);
     } else {
       const rect = targetEl.getBoundingClientRect();
       targetY = Math.max(0, rect.top + window.scrollY - (window.innerHeight - rect.height) * 0.5);
@@ -1920,8 +1934,57 @@ function setupScrollChoreography() {
     if (idx < 10) closeDrawer();
   }
 
+  // Button inside Ch 11 card to glide straight into the pure fullscreen 3D showcase zone (card scrolled cleanly out of sight!)
+  const btnClearShowcase = document.getElementById('btn-clear-showcase');
+  btnClearShowcase?.addEventListener('click', () => {
+    const ch11 = document.getElementById('chapter-full-explode');
+    if (!ch11) return;
+    const rect = ch11.getBoundingClientRect();
+    const clearY = Math.max(0, rect.top + window.scrollY + window.innerHeight * 0.72);
+    if (scrollTween) scrollTween.kill();
+    const proxy = { y: window.scrollY };
+    scrollTween = gsap.to(proxy, {
+      y: clearY,
+      duration: 0.65,
+      ease: 'power3.out',
+      onUpdate: () => window.scrollTo({ top: proxy.y, left: 0, behavior: 'instant' }),
+      onComplete: () => { scrollTween = null; },
+    });
+  });
+
+  // Track Chapter 12 Inspector zone accurately regardless of chapter heights:
+  // Leaving Ch 12 upward ALWAYS restores guided scroll state & re-enables labels so pins NEVER stay stuck hidden!
+  const inspectorAnchorEl = document.getElementById('inspector-anchor');
+  const inspectorCardEl = document.getElementById('inspector-card');
+  if (inspectorAnchorEl) {
+    ScrollTrigger.create({
+      trigger: inspectorAnchorEl,
+      start: 'top 68%',
+      end: 'bottom bottom',
+      onEnter: () => {
+        dock.classList.add('visible');
+        scrollyStage?.classList.add('dock-visible');
+      },
+      onEnterBack: () => {
+        dock.classList.add('visible');
+        scrollyStage?.classList.add('dock-visible');
+      },
+      onLeaveBack: () => {
+        dock.classList.remove('visible');
+        scrollyStage?.classList.remove('dock-visible');
+        state.manualOverride = false;
+        state.showCadDims = false;
+        state.showPinsToggle = true;
+        state.isolatedId = null;
+        document.getElementById('btn-dims')?.classList.remove('active');
+        document.getElementById('btn-pins')?.classList.add('active');
+        inspectorCardEl?.classList.remove('card-minimized');
+        if (state.freeOrbit) setFreeOrbit(false);
+      },
+    });
+  }
+
   // Master continuous 3D choreography across all 12 chapters
-  let lastDockShown = false;
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: '.chapters-container',
@@ -1931,17 +1994,6 @@ function setupScrollChoreography() {
       onUpdate: (self) => {
         state.scrollProgress = self.progress;
         progressBar.style.transform = `scaleX(${self.progress.toFixed(4)})`;
-
-        if (self.progress < 0.84 && state.manualOverride) {
-          state.manualOverride = false;
-          if (state.freeOrbit) setFreeOrbit(false);
-        }
-        const dockShown = self.progress > 0.86;
-        if (dockShown !== lastDockShown) {
-          lastDockShown = dockShown;
-          dock.classList.toggle('visible', dockShown);
-          scrollyStage?.classList.toggle('dock-visible', dockShown);
-        }
       },
     },
   });
@@ -2104,7 +2156,7 @@ function setupScrollChoreography() {
     ease: 'power2.inOut',
   })
 
-  // 10 -> 11: GRAND FULL EXPLODED VIEW 360° (ALL 17 parts exploded simultaneously, opaque vermilion red!)
+  // 10 -> 11a: GRAND FULL EXPLODED VIEW 360° (ALL 17 parts exploded simultaneously, opaque vermilion red!)
   .to(state, {
     xrayAmount: 0.0,
     exShell: 1.0,
@@ -2114,17 +2166,29 @@ function setupScrollChoreography() {
     exAudioIot: 1.0,
     exPower: 1.0,
     exBase: 1.0,
-    camX: isMobile ? 5.2 : 5.6,
-    camY: 3.15,
-    camZ: isMobile ? 9.4 : 8.2,
+    camX: isMobile ? 5.2 : 5.5,
+    camY: 3.10,
+    camZ: isMobile ? 9.4 : 8.1,
     targetX: 0.0,
-    targetY: 1.95,
+    targetY: 1.92,
     modelRotY: 5.83, // Equivalent to -0.45 + 2π
-    duration: 1.3,
+    duration: 1.25,
     ease: 'power2.inOut',
   })
 
-  // 11 -> 12: Frame PONDULO cleanly on the RIGHT so Chapter 12 card on the left NEVER covers the model!
+  // 11b: PURE FULLSCREEN SHOWCASE (zero pop-up cards on screen -> calm panoramic hold so all 13 labels are easily clickable!)
+  .to(state, {
+    camX: isMobile ? 4.4 : 4.8,
+    camY: 2.95,
+    camZ: isMobile ? 9.2 : 8.0,
+    targetX: 0.0,
+    targetY: 1.88,
+    modelRotY: 6.18,
+    duration: 1.25,
+    ease: 'none',
+  })
+
+  // 11b -> 12: Frame PONDULO cleanly on the RIGHT so Chapter 12 card on the left NEVER covers the model!
   .to(state, {
     camX: isMobile ? -3.4 : -3.2,
     camY: 2.85,
@@ -2234,7 +2298,9 @@ function setupInspectorControls() {
     // Auto-hide outer assembly CAD dimensions if user explodes model past 20% so dims never float in mid-air!
     if (v > 0.2 && state.showCadDims) {
       state.showCadDims = false;
+      savedExplodeBeforeDims = null;
       btnDims?.classList.remove('active');
+      btnPins.classList.toggle('active', state.showPinsToggle);
     }
   });
 
@@ -2269,30 +2335,68 @@ function setupInspectorControls() {
       : (isEn ? '◎ Isolate component' : '◎ Isola componente');
   });
 
+  let savedExplodeBeforeDims = null;
+  const btnHideInspectorCard = document.getElementById('btn-hide-inspector-card');
+  btnHideInspectorCard?.addEventListener('click', () => {
+    document.getElementById('inspector-card')?.classList.add('card-minimized');
+  });
+
   btnDims?.addEventListener('click', () => {
     state.manualOverride = true;
     state.showCadDims = !state.showCadDims;
     btnDims.classList.toggle('active', state.showCadDims);
     if (state.showCadDims) {
-      // Mutually exclusive with 13 component pins + gently collapse explosion to 0% so CAD outer envelope is exact!
-      state.showPinsToggle = false;
+      // Save current explosion & pins state so turning CAD Dims OFF restores everything seamlessly!
+      savedExplodeBeforeDims = {
+        exShell: state.exShell, exSchedaA: state.exSchedaA, exSchedaB: state.exSchedaB,
+        exSchedaC: state.exSchedaC, exAudioIot: state.exAudioIot, exPower: state.exPower, exBase: state.exBase,
+      };
       btnPins.classList.remove('active');
       closeDrawer();
       state.exShell = 0; state.exSchedaA = 0; state.exSchedaB = 0;
       state.exSchedaC = 0; state.exAudioIot = 0; state.exPower = 0; state.exBase = 0;
       ctrlExplode.value = '0';
       valExplode.textContent = '0%';
+    } else {
+      // Turning CAD Dims OFF restores previous explosion AND re-illuminates the Labels button!
+      if (savedExplodeBeforeDims) {
+        Object.assign(state, savedExplodeBeforeDims);
+        const pct = Math.round(Math.max(state.exShell, state.exBase) * 100);
+        ctrlExplode.value = String(pct);
+        valExplode.textContent = `${pct}%`;
+        savedExplodeBeforeDims = null;
+      }
+      btnPins.classList.toggle('active', state.showPinsToggle);
     }
   });
 
   btnPins.addEventListener('click', () => {
-    state.showPinsToggle = !state.showPinsToggle;
-    btnPins.classList.toggle('active', state.showPinsToggle);
-    if (state.showPinsToggle && state.showCadDims) {
+    if (state.showCadDims) {
+      // Switching directly from CAD Dims -> Labels!
       state.showCadDims = false;
       btnDims?.classList.remove('active');
+      state.showPinsToggle = true;
+      if (savedExplodeBeforeDims) {
+        Object.assign(state, savedExplodeBeforeDims);
+        savedExplodeBeforeDims = null;
+      }
+    } else {
+      state.showPinsToggle = !state.showPinsToggle;
     }
-    if (!state.showPinsToggle) closeDrawer();
+    // If user explicitly enables Labels while model was collapsed at 0%, gently open explosion so all 13 pins appear!
+    if (state.showPinsToggle) {
+      const curEx = Math.max(state.exShell, state.exSchedaA, state.exSchedaB, state.exSchedaC, state.exAudioIot, state.exPower, state.exBase);
+      if (curEx <= 0.08) {
+        state.manualOverride = true;
+        state.exShell = 0.85; state.exSchedaA = 0.85; state.exSchedaB = 0.85;
+        state.exSchedaC = 0.85; state.exAudioIot = 0.85; state.exPower = 0.85; state.exBase = 0.85;
+        ctrlExplode.value = '85';
+        valExplode.textContent = '85%';
+      }
+    } else {
+      closeDrawer();
+    }
+    btnPins.classList.toggle('active', state.showPinsToggle);
   });
 
   btnResetCam?.addEventListener('click', () => {

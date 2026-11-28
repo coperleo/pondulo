@@ -26,7 +26,7 @@
 
   <link rel="icon" type="image/png" href="assets/media/pondulo_icon.png" />
   <link rel="preload" as="fetch" crossorigin href="assets/pondulo.glb?v=7" />
-  <link rel="stylesheet" href="css/style.css?v=16" />
+  <link rel="stylesheet" href="css/style.css?v=17" />
 
   <!-- Import Map for Three.js ES Modules -->
   <script type="importmap">
@@ -408,21 +408,25 @@
         </div>
       </article>
 
-      <!-- 11 · GRAND FULL EXPLODED VIEW 360° -->
-      <article class="chapter chapter-top" id="chapter-full-explode" data-chapter="10">
-        <div class="chapter-card compact-card">
+      <!-- 11 · GRAND FULL EXPLODED VIEW 360° (+ FULLSCREEN CLEAR SHOWCASE ZONE BELOW CARD) -->
+      <article class="chapter chapter-top chapter-full-showcase" id="chapter-full-explode" data-chapter="10">
+        <div class="chapter-card compact-card" id="full-explode-card">
           <span class="step-num">11 / 12 · VISTA D'INSIEME</span>
           <h2>Uno sguardo completo su tutta l'architettura.</h2>
           <p>
-            Dalla testa basculante alla cella di carico nella base: tutti i moduli meccanici ed elettronici di PONDULO
-            visti insieme. Clicca su qualsiasi etichetta per aprire la scheda tecnica del componente.
+            Dalla testa basculante alla cella di carico nella base: tutti i moduli di PONDULO esplosi insieme.
+            Scorri leggermente giù (o premi il tasto qui sotto) per avere <strong>solo il modello a tutto schermo</strong> e cliccare comodamente qualsiasi etichetta.
           </p>
+          <button type="button" class="showcase-clear-btn" id="btn-clear-showcase" data-i18n="btn_clear_showcase">
+            🔍 Vedi solo modello e targhette a tutto schermo ↓
+          </button>
         </div>
       </article>
 
       <!-- 12 · FREE 360° INTERACTIVE INSPECTOR -->
       <article class="chapter chapter-left chapter-inspector" id="inspector-anchor" data-chapter="11">
         <div class="chapter-card inspector-card" id="inspector-card">
+          <button type="button" class="card-minimize-btn" id="btn-hide-inspector-card" title="Nascondi questo riquadro per vedere solo il modello" aria-label="Nascondi riquadro">✕ Nascondi riquadro</button>
           <span class="step-num">12 / 12 · INSPECTOR 3D LIBERO</span>
           <h2>Esplora PONDULO in 3D a mano libera.</h2>
           <p>
@@ -1147,8 +1151,8 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=23"></script>
+  <script type="module" src="js/app.js?v=24"></script>
   <script type="module" src="js/features.js?v=7"></script>
-  <script type="module" src="js/i18n.js?v=6"></script>
+  <script type="module" src="js/i18n.js?v=7"></script>
 </body>
 </html>

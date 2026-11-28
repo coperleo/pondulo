@@ -37,6 +37,7 @@ const I18N_DICT = {
     scope_title: 'BENCH OSCILLOSCOPE & LOGIC ANALYZER',
     scope_weight_lbl: 'Test weight:',
     scope_btn_pwm: 'Compare discarded noisy PWM',
+    btn_clear_showcase: '🔍 Fullscreen model & clickable labels ↓',
     bom_kicker: 'VERIFIED BILL OF MATERIALS · HARDWARE & FIRMWARE',
     bom_title: 'Full BOM & Official Datasheets',
     bom_f_all: 'All',

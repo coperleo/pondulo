@@ -4,7 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PONDULO — Bilancia Touchless 3D | NISC 2026 · STMicroelectronics</title>
-  <meta name="description" content="PONDULO è una bilancia intelligente touchless controllata tramite gesti spaziali ToF 8x8 VL53L7CX su architettura distribuita tri-Nucleo STM32G474RE. Sviluppata al NISC 2026 in collaborazione con STMicroelectronics." />
+  <meta name="description" content="PONDULO è una bilancia smart 100% touchless progettata al NISC 2026 con STMicroelectronics: sensore laser ToF 8x8 VL53L7CX, tre schede STM32 NUCLEO-G474RE su ChibiOS/RT, cella di carico a 24 bit e modello 3D interattivo." />
+  <meta name="theme-color" content="#08090c" />
+  <link rel="canonical" href="https://pondulo.vincenzonet.it/" />
+
+  <!-- Open Graph / WhatsApp / LinkedIn / Telegram Preview -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PONDULO · NISC 2026" />
+  <meta property="og:url" content="https://pondulo.vincenzonet.it/" />
+  <meta property="og:title" content="PONDULO — Bilancia Touchless 3D (STM32 + ToF 8×8)" />
+  <meta property="og:description" content="Esplora in 3D la bilancia senza contatto nata al NeaPolis Innovation Summer Campus 2026 con STMicroelectronics: raggi X, esploso interattivo, simulatore live e schema completo." />
+  <meta property="og:image" content="https://pondulo.vincenzonet.it/assets/media/hero_live.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PONDULO — Bilancia Touchless 3D (STM32 + ToF 8×8)" />
+  <meta name="twitter:description" content="Modello 3D interattivo, esploso componente per componente, simulatore nel browser e architettura tri-STM32." />
+  <meta name="twitter:image" content="https://pondulo.vincenzonet.it/assets/media/hero_live.webp" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -204,15 +218,15 @@
       <!-- 02 · DESIGN & TILTING HEAD -->
       <article class="chapter chapter-right" id="chapter-tilt" data-chapter="1">
         <div class="chapter-card">
-          <span class="step-num">02 / 12 · ERGONOMIA & VINCOLO ROTATIVO</span>
-          <h2>Testa basculante per ogni postazione.</h2>
+          <span class="step-num">02 / 12 · SCOCCA & CERNIERA</span>
+          <h2>Testa inclinabile e zero cavi a vista.</h2>
           <p>
-            La scocca in PLA rosso vermiglio stampata in 3D integra una <strong>colonna centrale cava</strong>
-            che nasconde interamente i cablaggi tra base e testa, lasciando l'esterno liscio e igienizzabile.
+            La scocca rossa stampata in 3D sfrutta una <strong>colonna centrale cava</strong>: tutti i fili che collegano
+            la base alla testa passano all'interno del piantone, lasciando l'esterno pulito, ordinato e facile da pulire.
           </p>
           <p>
-            La doppia cerniera interna attorno all'asse orizzontale permette di <strong>inclinare fluidamente la testa</strong>
-            (±24°), orientando display e sensore ToF verso operatori in piedi al banco o seduti in ambulatorio.
+            La doppia cerniera permette di <strong>inclinare la testa di ±24°</strong>, così sia chi lavora in piedi
+            dietro un bancone sia chi è seduto in ambulatorio ha sempre schermo e sensore puntati dritti verso di sé.
           </p>
           <div class="spec-chips">
             <span>Altezza 330 mm</span>
@@ -225,17 +239,17 @@
       <!-- 03 · TOF 8x8 LASER CONE -->
       <article class="chapter chapter-right" id="chapter-tof" data-chapter="2">
         <div class="chapter-card">
-          <span class="step-num">03 / 12 · INTERAZIONE SPAZIALE LASER</span>
-          <h2>64 fasci infrarossi. Zero tocco.</h2>
+          <span class="step-num">03 / 12 · SENSORE LASER TIME-OF-FLIGHT</span>
+          <h2>64 raggi infrarossi. Zero tocco.</h2>
           <p>
-            Il sensore <strong>VL53L7CX</strong> emette impulsi laser infrarossi (VCSEL 940 nm) su una griglia
-            <strong>8×8</strong> con campo visivo di ~60°. Misurando il tempo di volo reale della luce, riconosce la mano
-            anche con guanti chirurgici o in nitrile di qualsiasi colore.
+            Il sensore <strong>VL53L7CX</strong> emette impulsi laser infrarossi invisibili (940 nm) su una griglia
+            <strong>8×8</strong> (~60° di apertura) e misura il tempo che la luce impiega a rimbalzare sulla mano.
+            Misurando una distanza fisica e non un contatto capacitivo, funziona benissimo anche con mani bagnate o guanti in lattice e nitrile di qualunque colore.
           </p>
           <ul class="feature-list">
-            <li><strong>Cursore fluido nell'aria:</strong> il firmware ricava il baricentro della mano in virgola fissa Q16 e lo stabilizza con filtro EMA a 100 Hz.</li>
-            <li><strong>Selezione a sosta (1,5 s):</strong> basta fermare il cursore su un pulsante per confermarlo senza toccare lo schermo.</li>
-            <li><strong>Gesti in aria e profondità:</strong> swipe in 4 direzioni più soglie di distanza <code>&lt;90 mm</code> e <code>&gt;190 mm</code> per entrare o uscire dai menu.</li>
+            <li><strong>Cursore morbido in aria:</strong> il firmware trova il centro della mano usando solo numeri interi scalati (<code>Q16</code>) e ammorbidisce il movimento con un filtro esponenziale (<code>EMA</code> a 100 Hz).</li>
+            <li><strong>Conferma a sosta (1,5 s):</strong> tieni fermo il cursore per un secondo e mezzo sul pulsante scelto e il tasto si preme da solo, senza toccare nulla.</li>
+            <li><strong>Swipe e profondità:</strong> muovi la mano di lato per cambiare schermata, oppure avvicinala (<code>&lt;90 mm</code>) / allontanala (<code>&gt;190 mm</code>) per entrare o tornare indietro.</li>
           </ul>
         </div>
       </article>
@@ -244,19 +258,18 @@
       <article class="chapter chapter-right" id="chapter-xray" data-chapter="3">
         <div class="chapter-card">
           <span class="step-num">04 / 12 · VISIONE RAGGI X</span>
-          <h2>Sotto la scocca: ingegneria su misura.</h2>
+          <h2>Sotto la scocca: progettata attorno alle schede.</h2>
           <p>
-            L'intera scocca è stata modellata su misura attorno agli ingombri reali delle schede, incastrando
-            al millimetro l'architettura embedded dentro i 200 × 130 mm della testa e nel telaio strutturale a X della base.
+            Abbiamo disegnato l'intera scocca in Fusion 360 partendo dalle misure reali dei moduli elettronici, ricavando
+            gli incastri per far stare tre schede Nucleo, display e alimentazione nei 200 × 130 mm della testa e nel telaio a X della base.
           </p>
           <p>
-            Trattandosi di un prototipo in fase sperimentale e in continua crescita, il vano posteriore e il fondo
-            sono stati volutamente lasciati aperti — senza pannelli di chiusura definitivi — per garantire accesso
-            immediato a porte ST-LINK, cablaggi e futuri upgrade.
+            Essendo un prototipo nato e cresciuto in laboratorio durante il campus, abbiamo lasciato aperti di proposito il retro e il fondo:
+            così potevamo collegare al volo il cavo <code>ST-LINK</code> per ricaricare il firmware o controllare un pin col multimetro senza smontare tutto.
           </p>
           <div class="spec-chips">
-            <span>Scocca su misura</span>
-            <span>Prototipo aperto</span>
+            <span>Disegnata in Fusion 360</span>
+            <span>Accesso rapido debug</span>
             <span>3× NUCLEO-G474RE</span>
           </div>
         </div>
@@ -265,21 +278,21 @@
       <!-- 05 · SPOTLIGHT SCHEDA A: ToF VL53L7CX + NUCLEO #1 -->
       <article class="chapter chapter-left" id="chapter-scheda-a" data-chapter="4">
         <div class="chapter-card">
-          <span class="step-num">05 / 12 · SCHEDA A · SENSING OTTICO</span>
+          <span class="step-num">05 / 12 · SCHEDA A · LETTURA MANO</span>
           <h2>VL53L7CX + STM32 Nucleo #1</h2>
           <p>
-            Lo shield <strong>X-NUCLEO-53L7A1</strong> e la prima <strong>NUCLEO-G474RE</strong> formano un nodo
-            dedicato esclusivamente alla visione spaziale (<code>cursorSensor</code>), collegato al sensore su
-            <strong>I²C1 Fast Mode+ a 1 MHz</strong> con interrupt hardware su <code>PA4</code>.
+            Leggere di continuo 64 zone di distanza e riconoscere i gesti senza perdere colpi richiede tempi precisi: per questo la prima
+            <strong>NUCLEO-G474RE</strong> con lo shield <strong>X-NUCLEO-53L7A1</strong> fa solo questo lavoro (<code>cursorSensor</code>),
+            dialogando col sensore su <strong>I²C1 a 1 MHz</strong> con segnale di interrupt sul pin <code>PA4</code>.
           </p>
           <p>
-            Calcola il baricentro della mano in aritmetica intera Q16, filtra la traiettoria e trasmette
-            coordinate <code>$XY</code> e gesti <code>$GS</code> verso Scheda B via <strong>USART3 a 921.600 baud</strong>.
+            Ricava posizione e gesto usando solo matematica intera (zero <code>float</code>) e spedisce alla Scheda B
+            stringhe leggere con coordinate <code>$XY</code> e swipe <code>$GS</code> su seriale veloce <strong>USART3 a 921.600 baud</strong>.
           </p>
           <div class="spec-chips">
             <span>8×8 @ 15 Hz / 4×4 @ 60 Hz</span>
             <span>USART3 921.6 kbaud</span>
-            <span>Zero float</span>
+            <span>Solo interi Q16</span>
           </div>
         </div>
       </article>
@@ -287,21 +300,21 @@
       <!-- 06 · SPOTLIGHT SCHEDA B: DISPLAY ILI9341 + NUCLEO #2 -->
       <article class="chapter chapter-right" id="chapter-scheda-b" data-chapter="5">
         <div class="chapter-card">
-          <span class="step-num">06 / 12 · SCHEDA B · HUB HMI & AUDIO</span>
+          <span class="step-num">06 / 12 · SCHEDA B · SCHERMO & LOGICA</span>
           <h2>Display TFT 2.2" + STM32 Nucleo #2</h2>
           <p>
-            È il cervello dell'interfaccia (<code>DEMO7</code>): lo shield <strong>X-NUCLEO-GFX01M2</strong> con display
-            QVGA <strong>ILI9341 (320×240)</strong> disegna il cursore touchless, le barre di Dwell e i menu
-            <strong>Macelleria</strong> e <strong>Clinico</strong> tramite libreria <strong>uGFX</strong> a 50 Hz protetta da mutex SPI.
+            È il regista del sistema (<code>DEMO7</code>): monta lo shield <strong>X-NUCLEO-GFX01M2</strong> con schermo
+            <strong>ILI9341 (320×240)</strong> e disegna a 50 Hz cursore, barre di conferma e schermate <strong>Macelleria</strong>
+            e <strong>Clinico</strong> con <strong>uGFX</strong>. Un semaforo software (<code>gdisp_mutex</code>) evita conflitti sul bus SPI mentre cambia pagina.
           </p>
           <p>
-            Riceve i gesti da Scheda A, il peso analogico da Scheda C (<code>ADC2 PA4</code>), i prezzi da ESP8266 (<code>UART1</code>)
-            e comanda i feedback acustici sul lettore MP3 (<code>UART5</code>).
+            Raccoglie tutto in un unico posto: gesti da Scheda A, tensione del peso da Scheda C (<code>ADC2 PA4</code>),
+            listino prezzi dall'ESP8266 (<code>UART1</code>) e comandi audio verso il modulo MP3 (<code>UART5</code>).
           </p>
           <div class="spec-chips">
             <span>ILI9341 SPI · uGFX</span>
-            <span>Mutex gdisp</span>
-            <span>Dual UI Clinico/Food</span>
+            <span>Mutex anti-sfarfallio</span>
+            <span>Menu Food &amp; Clinico</span>
           </div>
         </div>
       </article>
@@ -309,16 +322,16 @@
       <!-- 07 · SPOTLIGHT SCHEDA C: NUCLEO #3 + 7-SEGMENT DISPLAY -->
       <article class="chapter chapter-left" id="chapter-scheda-c" data-chapter="6">
         <div class="chapter-card">
-          <span class="step-num">07 / 12 · SCHEDA C · METROLOGIA & LED</span>
+          <span class="step-num">07 / 12 · SCHEDA C · PESATA & LED</span>
           <h2>STM32 Nucleo #3 + Display 7-Segmenti</h2>
           <p>
-            Montata lungo la parete superiore della testa, la terza <strong>NUCLEO-G474RE</strong> (<code>bilanciaFinale</code>)
-            elabora i campioni a 24 bit dell'HX711 con media mobile a 16 campioni, ciclo Live/Hold, auto-taratura al boot
-            (con animazione <em>Knight Rider</em>) e <em>auto-zero tracking</em> sotto ±1 g.
+            Fissata in alto nella testa, la terza <strong>NUCLEO-G474RE</strong> (<code>bilanciaFinale</code>) si dedica alla pesata:
+            pulisce i dati a 24 bit dell'HX711 con una media mobile su 16 campioni, corregge da sola le piccole derive sotto ±1 g
+            e all'accensione fa scorrere i LED rossi stile <em>K.I.T.T.</em> mentre esegue la tara automatica.
           </p>
           <p>
-            Pilota il display a 8 cifre <strong>2× CL3641BH / 74HC595</strong> via SPI1 e invia il peso a Scheda B con un
-            <strong>ponte analogico puro DAC → ADC (PA4 → PA4, 0–3,3 V = 0–1000 g)</strong> a latenza e jitter zero.
+            Oltre a pilotare il display a 8 cifre (<code>2× 74HC595</code> su SPI1), trasforma il peso in una tensione continua pulita
+            col suo DAC interno (<strong>PA4 → PA4, 0–3,3 V = 0–1000 g</strong>) letta all'istante dalla Scheda B.
           </p>
           <div class="spec-chips">
             <span>DAC1_OUT1 → ADC2_IN17</span>
@@ -331,20 +344,20 @@
       <!-- 08 · SPOTLIGHT REAR LEFT: MP3 YX5300 + ESP8266 Wi-Fi -->
       <article class="chapter chapter-right" id="chapter-audio-iot" data-chapter="7">
         <div class="chapter-card">
-          <span class="step-num">08 / 12 · RETRO SINISTRO · AUDIO & IoT</span>
+          <span class="step-num">08 / 12 · RETRO SINISTRO · AUDIO & WI-FI</span>
           <h2>Serial MP3 YX5300 & Wi-Fi ESP8266</h2>
           <p>
-            Nella parte posteriore sinistra della testa trovano posto i moduli dedicati ad audio e connettività. Il <strong>Serial MP3 Player v1.2 (YX5300)</strong>
-            con microSD riceve frame a 8 byte su <strong>UART5 (9600 baud)</strong> da Scheda B per riprodurre conferme sonore
-            di benvenuto, selezione tasti e scontrino senza gravare sulla CPU.
+            Sul retro sinistro abbiamo sistemato audio e rete. Il modulo <strong>YX5300</strong> legge i file audio dalla sua microSD
+            quando riceve pacchetti da 8 byte su <strong>UART5 (9600 baud)</strong>: così riproduce i suoni di conferma e scontrino
+            senza far perdere tempo di calcolo all'STM32.
           </p>
           <p>
-            Subito sotto, il modulo <strong>ESP8266 Wi-Fi</strong> ospita una Web App locale con salvataggio atomico in flash
-            <code>LittleFS</code> (<code>.tmp</code> → rename) per aggiornare i listini €/kg da smartphone via <strong>UART1 (38.400 baud)</strong>.
+            Sotto c'è un <strong>ESP8266</strong> che espone una pagina web per cambiare i prezzi €/kg dal telefono: salva prima su un file
+            temporaneo <code>.tmp</code> in memoria <code>LittleFS</code> e poi lo rinomina, così il listino non si corrompe nemmeno se manca la corrente.
           </p>
           <div class="spec-chips">
             <span>YX5300 · UART5 9600</span>
-            <span>ESP8266 HTTP + LittleFS</span>
+            <span>ESP8266 Web + LittleFS</span>
             <span>UART1 38400 baud</span>
           </div>
         </div>
@@ -356,18 +369,18 @@
           <span class="step-num">09 / 12 · RETRO DESTRO · ALIMENTAZIONE</span>
           <h2>Convertitore Buck DC-DC LM2596</h2>
           <p>
-            Sul lato destro della camera posteriore, il modulo step-down <strong>LM2596</strong> con trimmer di precisione
-            e doppio condensatore elettrolitico converte l'alimentazione esterna a <strong>12 V DC</strong> in un rail
-            stabile a <strong>5 V</strong>.
+            Sul lato destro entra l'alimentazione a <strong>12 V DC</strong>: il regolatore switching step-down <strong>LM2596</strong>
+            (tarato col trimmer onboard e filtrato dai due elettrolitici) la abbassa a <strong>5 V stabili</strong> ad alta efficienza,
+            senza scaldare come farebbe un regolatore lineare.
           </p>
           <p>
-            Distribuisce energia pulita e massa comune (<code>GND</code> condiviso, essenziale per il riferimento analogico DAC→ADC)
-            alle tre schede Nucleo, ai display, al lettore MP3 e all'ESP8266.
+            Da qui partono i 5 V e soprattutto il <strong>riferimento di massa comune (GND a stella)</strong> per tutte le schede: fondamentale
+            perché basta una piccola differenza di potenziale sulla massa per falsare il peso letto in analogico tra Scheda C e Scheda B.
           </p>
           <div class="spec-chips">
-            <span>Input 12 V DC</span>
-            <span>Output 5,0 V regolato</span>
-            <span>GND stella comune</span>
+            <span>Ingresso 12 V DC</span>
+            <span>Uscita 5,0 V stabili</span>
+            <span>GND a stella comune</span>
           </div>
         </div>
       </article>
@@ -375,19 +388,20 @@
       <!-- 10 · SPOTLIGHT BASE: WEIGHING PLATE, LOAD CELL, HX711, AUDIO AMP & SPEAKER -->
       <article class="chapter chapter-right" id="chapter-explode-base" data-chapter="9">
         <div class="chapter-card">
-          <span class="step-num">10 / 12 · ESPLOSO BASE · METROLOGIA & ACUSTICA</span>
+          <span class="step-num">10 / 12 · ESPLOSO BASE · CELLA & AUDIO</span>
           <h2>Cella di carico, HX711, Amp e Speaker.</h2>
           <p>
-            Sotto il <strong>piatto bianco di pesatura</strong> è ancorata al telaio a X la <strong>cella di carico estensimetrica in alluminio</strong>.
-            Subito dietro, all'interno del piantone cavo, l'<strong>ADC HX711 a 24 bit</strong> amplifica il segnale in microvolt a pochi centimetri dal sensore per ridurre al minimo i disturbi.
+            Sotto il piatto bianco lavora una <strong>cella di carico a ponte di Wheatstone</strong> in alluminio. Siccome il segnale che esce
+            dalla cella vale pochi millivolt, abbiamo piazzato il convertitore <strong>HX711 a 24 bit</strong> subito lì dietro, alla base del piantone:
+            così amplifica e digitalizza il peso sul posto prima che i cavi lunghi possano raccogliere rumore elettrico.
           </p>
           <p>
-            Nei vani inferiori ai lati del telaio sono alloggiati l'<strong>amplificatore audio</strong> (con condensatore 1000 µF 35 V e potenziometro volume)
-            e l'<strong>altoparlante circolare da 45 mm</strong> che diffonde i feedback sonori al banco.
+            Nei due vani sotto la base a X trovano posto l'<strong>amplificatore audio</strong> (con elettrolitico da 1000 µF e trimmer del volume)
+            e lo <strong>speaker da 45 mm</strong> collegato via cavo AUX al modulo MP3 nella testa.
           </p>
           <div class="spec-chips">
-            <span>HX711 24-bit PGA</span>
-            <span>Amp 1000 µF + Vol</span>
+            <span>HX711 vicino alla cella</span>
+            <span>Amp 1000 µF + Volume</span>
             <span>Speaker 45 mm</span>
           </div>
         </div>
@@ -630,34 +644,36 @@
         <div class="decisions-grid">
           <div class="decision-card">
             <span class="dec-icon">⚡</span>
-            <h4>Perché un ponte analogico DAC → ADC?</h4>
+            <h4>Perché abbiamo passato il peso in analogico (DAC → ADC)?</h4>
             <p>
-              Dopo aver testato sia un link seriale UART (affetto da errori di framing per contesa su USART3) sia un link PWM (soggetto a jitter di ±2–3 g che forzava ridisegni continui del display),
-              il team ha optato per una <strong>tensione DC pura</strong> generata dal DAC hardware su <code>PA4</code> e campionata dall'ADC2 della Scheda B: latenza zero, nessun pacchetto da decodificare e lettura stabile senza oscillazioni.
+              In laboratorio avevamo provato prima una seriale UART (ma entrava in conflitto con gli altri dati causando errori di lettura) e poi un segnale PWM
+              (che però oscillava di ±2–3 g facendo ridisegnare di continuo lo schermo). Alla fine abbiamo usato il <strong>DAC interno su <code>PA4</code></strong>
+              per generare una tensione DC pulita da 0 a 3,3 V letta dall'ADC della Scheda B: due fili, zero pacchetti da decodificare e lettura stabilissima.
             </p>
           </div>
           <div class="decision-card">
             <span class="dec-icon">📐</span>
-            <h4>Zero Floating-Point sul tracking della mano</h4>
+            <h4>Niente numeri con la virgola (float) sul tracking</h4>
             <p>
-              Il calcolo del baricentro ponderato su 5 zone (<code>w = 65536 / dist</code>) e il filtro di smoothing EMA (<code>α = 0.35</code> a 100 Hz con correzione anti-stallo)
-              girano interamente in <strong>aritmetica intera Q16/Q8</strong>, riducendo al minimo il carico CPU e garantendo un cursore fluido più veloce del frame rate del sensore.
+              Per calcolare il centro della mano sulle 5 zone più vicine (<code>peso = 65536 / distanza</code>) e far scorrere morbido il cursore a 100 Hz,
+              abbiamo moltiplicato le coordinate lavorando solo con <strong>numeri interi (formato Q16/Q8)</strong>: così il microcontrollore fa pochissima fatica
+              e il cursore resta sempre fluido anche se il sensore campiona a 15 Hz.
             </p>
           </div>
           <div class="decision-card">
             <span class="dec-icon">🛡️</span>
-            <h4>Concorrenza RTOS & Persistenza Atomica</h4>
+            <h4>Schermo senza glitch &amp; prezzi salvati in sicurezza</h4>
             <p>
-              Su Scheda B un <code>gdisp_mutex</code> serializza gli accessi SPI tra transizioni di schermata e tick cursore a 50 Hz. Sull'<strong>ESP8266</strong> il listino prezzi
-              (in centesimi/kg <code>uint32_t</code>) viene salvato in flash LittleFS scrivendo prima un file <code>.tmp</code>, verificandolo byte-per-byte e poi rinominandolo atomicamente.
+              Su Scheda B girano più thread ChibiOS insieme: un semaforo (<code>gdisp_mutex</code>) mette in fila chi scrive sullo schermo SPI così le schermate non si mischiano mai.
+              Sull'<strong>ESP8266</strong> i prezzi (salvati in centesimi interi, senza <code>float</code>) vengono scritti prima su un file <code>.tmp</code>, ricontrollati e poi rinominati in un colpo solo.
             </p>
           </div>
           <div class="decision-card">
             <span class="dec-icon">🧪</span>
-            <h4>Reverse Engineering del Display & K.I.T.T.</h4>
+            <h4>Mappare il display al buio &amp; l'easter egg di K.I.T.T.</h4>
             <p>
-              Il modulo RobotDyn <code>2× 74HC595</code> privo di schema elettrico è stato mappato empiricamente (scoprendo l'inversione chip near/far e la rotazione ciclica dei digit <code>{4,5,6,7,0,1,2,3}</code>).
-              Durante la taratura al boot, un thread dedicato esegue uno scanner luminoso stile <strong>Knight Rider</strong> (attivabile anche come easter egg tenendo premuto il tasto B1).
+              Il modulo a 8 cifre con due chip <code>74HC595</code> non aveva alcuno schema elettrico: gli abbiamo mandato un bit alla volta da codice per capire a cosa corrispondesse ogni pin,
+              scoprendo che i due chip erano invertiti e l'ordine delle cifre ruotato (<code>{4,5,6,7,0,1,2,3}</code>). E per non lasciare lo schermo spento durante la tara iniziale, ci abbiamo messo lo scanner rosso di <strong>K.I.T.T.</strong> (richiamabile anche col tasto blu B1).
             </p>
           </div>
         </div>
@@ -727,33 +743,33 @@
       <div class="container">
         <div class="section-head">
           <div class="kicker-with-icon">
-            <img src="assets/media/pondulo_icon.png" alt="" class="inline-app-icon" loading="lazy" aria-hidden="true" />
-            <span class="section-kicker">DOVE SI PUÒ USARE</span>
+            <img src="assets/media/pondulo_icon.webp" alt="" class="inline-app-icon" loading="lazy" decoding="async" aria-hidden="true" />
+            <span class="section-kicker">DOVE HA SENSO USARLA</span>
           </div>
-          <h2>Un solo dispositivo, tre ambiti d'uso.</h2>
+          <h2>Un solo prototipo, tre contesti reali.</h2>
           <p class="section-intro">
-            L'interfaccia di PONDULO è modulare: già dalla schermata Home basta un gesto per passare dalla modalità bilancia commerciale (Macelleria)
-            a quella pensata per ambulatori e ambienti sterili.
+            Abbiamo strutturato il software a schermate indipendenti: già dal menu iniziale basta un gesto per usare PONDULO come bilancia da banco alimentare
+            oppure come postazione da ambulatorio e laboratorio.
           </p>
         </div>
 
         <div class="scenario-tabs" role="tablist">
-          <button class="tab-btn active" data-tab="food" role="tab" aria-selected="true">🥩 Food & Retail (Macelleria)</button>
-          <button class="tab-btn" data-tab="clinical" role="tab" aria-selected="false">🏥 Ambiente Clinico & Sala</button>
+          <button class="tab-btn active" data-tab="food" role="tab" aria-selected="true">🥩 Banco Alimentari (Macelleria)</button>
+          <button class="tab-btn" data-tab="clinical" role="tab" aria-selected="false">🏥 Ambulatorio &amp; Reparto</button>
           <button class="tab-btn" data-tab="chemical" role="tab" aria-selected="false">⚗️ Laboratorio Chimico</button>
         </div>
 
         <div class="scenario-panel active" id="tab-food">
           <div class="scenario-copy">
-            <h3>Igiene totale al banco freschi</h3>
+            <h3>Niente più tasti unti o sporchi al banco</h3>
             <p>
-              In macellerie, pescherie, gastronomie e supermercati l'operatore alterna continuamente la manipolazione di alimenti crudi
-              con la digitazione su tastiere o touchscreen condivisi — uno dei principali vettori di <strong>contaminazione crociata</strong>.
+              In macelleria, pescheria o gastronomia chi serve al banco tocca carne o pesce crudo e un attimo dopo deve battere il codice prodotto
+              sulla bilancia: evitare di toccare ogni volta lo stesso schermo condiviso è molto più igienico e pratico.
             </p>
             <ul>
-              <li><strong>Carosello 2×2 touchless:</strong> selezione rapida di Manzo, Pollo, Maiale, Agnello (espandibile via SD/Wi-Fi).</li>
-              <li><strong>Calcolo real-time:</strong> peso dalla cella di carico × €/kg aggiornato via Web UI ESP8266.</li>
-              <li><strong>Moltiplicatore & Carrello multi-riga:</strong> tastierino numerico in aria per quantità e riepilogo scontrino con cue acustico.</li>
+              <li><strong>Scelta rapida 2×2 in aria:</strong> selezioni Manzo, Pollo, Maiale o Agnello fermando il cursore per 1,5 s sul riquadro.</li>
+              <li><strong>Prezzo calcolato al volo:</strong> peso letto dalla cella × prezzo €/kg aggiornabile da telefono tramite la pagina web dell'ESP8266.</li>
+              <li><strong>Quantità &amp; Carrello:</strong> tastierino touchless per moltiplicare i pezzi, sommare più tagli nello stesso conto e stampare con conferma sonora.</li>
             </ul>
           </div>
           <div class="scenario-mockup">
@@ -773,15 +789,15 @@
 
         <div class="scenario-panel" id="tab-clinical">
           <div class="scenario-copy">
-            <h3>Lavorare senza interrompere la sterilità</h3>
+            <h3>Consultare dati senza togliersi i guanti</h3>
             <p>
-              In ambulatori, sale operatorie e reparti ospedalieri, consultare dati clinici o pesare campioni biologici senza toccare
-              superfici non sterili evita continui cambi di guanti e riduce il rischio di contaminazione.
+              In un ambulatorio o in medicazione basta toccare un monitor o una tastiera non sterile per dover buttare e ricambiare i guanti.
+              Con i gesti in aria puoi scorrere le schede o pesare un campione tenendo le mani libere da contatti.
             </p>
             <ul>
-              <li><strong>Cartella Clinica Touchless:</strong> visualizzazione immediata di Frequenza Cardiaca (BPM), Pressione Arteriosa, SpO₂ e Temperatura.</li>
-              <li><strong>Anamnesi con Air-Swipe:</strong> sfogliamento gestuale di età, gruppo sanguigno, allergie, terapia in corso e reparto.</li>
-              <li><strong>Feedback acustico discreto:</strong> conferma sonora per ogni comando, così l'operatore non deve distogliere lo sguardo dal lavoro.</li>
+              <li><strong>Parametri a colpo d'occhio:</strong> schermata chiara con battito cardiaco (BPM), pressione, saturazione SpO₂ e temperatura.</li>
+              <li><strong>Scheda paziente con uno swipe:</strong> muovi la mano di lato per leggere età, gruppo sanguigno, allergie e terapia in corso.</li>
+              <li><strong>Conferma sonora immediata:</strong> un bip discreto ti avvisa che il comando è stato preso anche senza fissare il display.</li>
             </ul>
           </div>
           <div class="scenario-mockup">
@@ -794,7 +810,7 @@
                   <div><small>SpO₂</small><strong>98%</strong></div>
                   <div><small>TEMP</small><strong>36.7°C</strong></div>
                 </div>
-                <div class="mock-sub">Swipe SX/DX → Scheda Anamnesi & Allergie</div>
+                <div class="mock-sub">Swipe SX/DX → Scheda Anamnesi &amp; Allergie</div>
               </div>
             </div>
           </div>
@@ -802,15 +818,15 @@
 
         <div class="scenario-panel" id="tab-chemical">
           <div class="scenario-copy">
-            <h3>Dosaggio sicuro sotto cappa chimica</h3>
+            <h3>Pesare reagenti sotto cappa coi guanti spessi</h3>
             <p>
-              Quando si manipolano solventi, acidi o polveri reagenti con guanti in nitrile spessi, i touchscreen capacitivi falliscono
-              e i tasti meccanici rischiano la contaminazione chimica. Il laser ToF 940 nm funziona perfettamente anche con guanti protettivi.
+              Chi lavora in laboratorio con solventi, polveri o acidi indossa guanti spessi in nitrile su cui gli schermi touch capacitivi spesso non prendono,
+              oltre al rischio di sporcare i tasti con residui chimici. Il sensore laser a 940 nm legge la mano senza alcun problema.
             </p>
             <ul>
-              <li><strong>Tara & Hold senza contatto:</strong> azzeramento della beuta con un gesto di profondità senza toccare la bilancia.</li>
-              <li><strong>Immunità ottica:</strong> il dToF misura il tempo di volo, indipendentemente dal colore scuro o traslucido dei guanti DPI.</li>
-              <li><strong>Registrazione sicura:</strong> predisposizione per logging automatico delle pesate su server LIMS aziendale via Wi-Fi.</li>
+              <li><strong>Tara senza toccare la bilancia:</strong> appoggi la beuta e azzeri la tara con un gesto nell'aria, senza far vibrare il piatto.</li>
+              <li><strong>Indipendente dai guanti:</strong> basandosi sul rimbalzo della luce infrarossa, non fa differenza se indossi guanti neri, blu o doppi.</li>
+              <li><strong>Pronta per salvare le pesate:</strong> grazie al modulo Wi-Fi già a bordo è semplice inviare peso e orario direttamente a un PC di laboratorio.</li>
             </ul>
           </div>
           <div class="scenario-mockup">
@@ -819,7 +835,7 @@
               <div class="mock-body">
                 <div class="mock-sub">Reagente: NaCl · Tara beuta: 42.10 g</div>
                 <div class="mock-total" style="color:#38bdf8;">NETTO: 12.45 g</div>
-                <div class="mock-sub">Mano &lt; 90 mm → Registra lotto su LIMS</div>
+                <div class="mock-sub">Mano &lt; 90 mm → Salva pesata via Wi-Fi</div>
               </div>
             </div>
           </div>
@@ -832,46 +848,46 @@
       <div class="container">
         <div class="section-head-row">
           <div class="section-head">
-            <span class="section-kicker">EVOLUZIONE · VERSO PONDULO 2.0</span>
-            <h2>Potenzialità ed espansioni future.</h2>
+            <span class="section-kicker">IDEE PER IL FUTURO · VERSO PONDULO 2.0</span>
+            <h2>Cosa miglioreremmo nella prossima versione.</h2>
             <p class="section-intro">
-              PONDULO è nato in pochi giorni intensivi di HackFest come prototipo funzionante, ma la sua struttura modulare
-              si presta già a diversi sviluppi concreti per passare dal banco di laboratorio al prodotto finito.
+              Questo prototipo è nato in pochi giorni intensi di campus usando le schede di sviluppo che avevamo sul banco.
+              Dovendo portarlo avanti verso una versione definitiva, ecco i passi tecnici più concreti su cui lavoreremmo:
             </p>
           </div>
-          <img src="assets/media/pondulo_mascot.webp" alt="" class="section-mascot section-mascot-flip" loading="lazy" aria-hidden="true" />
+          <img src="assets/media/pondulo_mascot.webp" alt="" class="section-mascot section-mascot-flip" loading="lazy" decoding="async" aria-hidden="true" />
         </div>
 
         <div class="roadmap-grid">
           <article class="road-card">
-            <span class="road-phase">FASE 1 · HARDWARE</span>
-            <h4>Consolidamento Single-MCU & PCB Custom</h4>
-            <p>Unificare le tre schede Nucleo e l'ESP8266 su un'unica scheda custom 4-layer con <strong>STM32H7 / STM32WB</strong> (o STM32G4 + co-processore Wi-Fi/BLE), riducendo ingombri, cablaggi e costi BOM del 70%.</p>
+            <span class="road-phase">PASSO 1 · ELETTRONICA</span>
+            <h4>Un unico PCB custom al posto delle 3 Nucleo</h4>
+            <p>Disegnare una scheda singola su misura (es. in KiCad) con un solo microcontrollore STM32 più capiente e Wi-Fi integrato: via tutti i cavi Dupont volanti, ingombro dimezzato e montaggio molto più pulito.</p>
           </article>
           <article class="road-card">
-            <span class="road-phase">FASE 2 · MECCANICA</span>
-            <h4>Scocca sigillata IP65 lavabile</h4>
-            <p>Passaggio da PLA prototipale a scocca in polimero medical-grade / acciaio inox con vetro ottico IR-transparent sul VL53L7CX e guarnizioni siliconiche per sanificazione diretta a getto.</p>
+            <span class="road-phase">PASSO 2 · SCOCCA</span>
+            <h4>Guscio chiuso con vetrino IR lavabile</h4>
+            <p>Chiudere i vani oggi lasciati aperti per il debug aggiungendo guarnizioni e un vetrino scuro trasparente agli infrarossi (940 nm) davanti al sensore ToF, così da poter pulire tutta la scocca con una spugna umida.</p>
           </article>
           <article class="road-card">
-            <span class="road-phase">FASE 3 · EDGE AI</span>
-            <h4>Riconoscimento gesti con STM32Cube.AI</h4>
-            <p>Sostituire la FSM cinematica con una rete neurale compatta addestrata sulle mappe di profondità 8×8 direttamente su MCU (pinch-to-tare, rotazione polso, riconoscimento mano sinistra/destra).</p>
+            <span class="road-phase">PASSO 3 · FIRMWARE &amp; AI</span>
+            <h4>Gesti più naturali con STM32Cube.AI</h4>
+            <p>Allenare una piccola rete neurale leggera direttamente sulle mappe di profondità 8×8 dell'STM32 per distinguere gesti più fini, come pizzicare le dita per fare la tara o ruotare la mano per scorrere una lista.</p>
           </article>
           <article class="road-card">
-            <span class="road-phase">FASE 4 · CONNETTIVITÀ</span>
-            <h4>Sync bidirezionale Cloud, ERP & Stampante</h4>
-            <p>Protocollo UART/MQTT con CRC, ACK e sincronizzazione automatica al boot, stampa termica diretta di etichette adesive con barcode/QR e dashboard multi-bilancia per catene GDO o reparti ospedalieri.</p>
+            <span class="road-phase">PASSO 4 · PERIFERICHE</span>
+            <h4>Stampante termica reale &amp; controllo errori</h4>
+            <p>Collegare una mini stampante termica seriale per far uscire davvero l'etichetta adesiva col prezzo e il codice a barre, aggiungendo un controllo <code>CRC</code> e conferma <code>ACK</code> sui pacchetti tra moduli.</p>
           </article>
           <article class="road-card">
-            <span class="road-phase">FASE 5 · SICUREZZA</span>
-            <h4>Autenticazione Operatore NFC / RFID</h4>
-            <p>Avvicinando il badge personale (senza contatto) il terminale carica il profilo dell'operatore, traccia ogni pesata o accesso alla cartella clinica per conformità HACCP e GDPR sanitario.</p>
+            <span class="road-phase">PASSO 5 · ACCESSO</span>
+            <h4>Riconoscimento operatore con badge NFC</h4>
+            <p>Aggiungere un lettore NFC (<code>ST25R</code>) sotto la plastica frontale: basta avvicinare il badge personale per caricare il proprio profilo operatore o sbloccare la modalità clinica, sempre senza toccare tasti.</p>
           </article>
           <article class="road-card">
-            <span class="road-phase">FASE 6 · METROLOGIA</span>
-            <h4>Cella compensata in temperatura & Certificazione</h4>
-            <p>Integrazione di un sensore di temperatura locale per compensazione termica automatica, bolla digitale tramite MEMS IMU ST (LSM6DSO) per avviso di piano non livellato e taratura certificabile OIML.</p>
+            <span class="road-phase">PASSO 6 · PRECISIONE</span>
+            <h4>Sensore temperatura &amp; bolla digitale MEMS</h4>
+            <p>Le celle di carico risentono degli sbalzi termici e dei piani inclinati: con un sensore di temperatura vicino alla cella e un accelerometro ST (<code>LSM6DSO</code>) la bilancia può compensare la deriva e avvisare se non è in bolla.</p>
           </article>
         </div>
       </div>
@@ -1047,8 +1063,8 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=21"></script>
+  <script type="module" src="js/app.js?v=22"></script>
   <script type="module" src="js/features.js?v=6"></script>
-  <script type="module" src="js/i18n.js?v=4"></script>
+  <script type="module" src="js/i18n.js?v=5"></script>
 </body>
 </html>
